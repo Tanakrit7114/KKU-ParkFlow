@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Supabase URL and anon key are safe for browser use when Row Level Security is enabled.
 // Never put the service_role key here.
 const SUPABASE_URL='https://zjolbhatwstmxcojznyd.supabase.co';
-const SUPABASE_ANON_KEY='YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqb2xiaGF0d3N0bXhjb2p6bnlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTAzODgsImV4cCI6MjEwNDk2NjM4OH0.tOjynsGhBTiVz_czCYoW6ThZ6YjPUW4-JoTBaQJJp60';
 const configured=!SUPABASE_URL.includes('YOUR_')&&!SUPABASE_ANON_KEY.includes('YOUR_');
 const supabase=configured?createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
 const gate=document.querySelector('#login-gate'),error=document.querySelector('#login-error'),shell=document.querySelector('.shell');
