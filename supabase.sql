@@ -21,6 +21,9 @@ create or replace function public.is_admin() returns boolean language sql securi
 create policy "users read own profile" on public.profiles for select using (auth.uid()=id);
 create policy "users create own profile" on public.profiles for insert with check (auth.uid()=id);
 create policy "users update own profile" on public.profiles for update using (auth.uid()=id) with check (auth.uid()=id);
+create or replace function public.prevent_role_escalation() returns trigger language plpgsql security definer set search_path = public as $$ begin if old.role is distinct from new.role and current_user not in ('postgres','supabase_admin') and coalesce(auth.role(),'') <> 'service_role' then raise exception 'role can only be changed by a server administrator'; end if; return new; end; $$;
+drop trigger if exists profiles_role_guard on public.profiles;
+create trigger profiles_role_guard before update on public.profiles for each row execute function public.prevent_role_escalation();
 create policy "users read own reports" on public.reports for select using (auth.uid()=reporter_id);
 create policy "users create own reports" on public.reports for insert with check (auth.uid()=reporter_id);
 create policy "admins read all reports" on public.reports for select using (public.is_admin());
