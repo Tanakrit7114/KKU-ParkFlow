@@ -15,7 +15,7 @@ create policy "users create own appeals" on public.appeals for insert with check
 create policy "users read own appeals" on public.appeals for select using (auth.uid()=appellant_id or public.is_admin());
 create policy "admins manage appeals" on public.appeals for update using (public.is_admin()) with check (public.is_admin());
 create policy "admins read audit logs" on public.audit_logs for select using (public.is_admin());
-insert into public.penalty_rules (violation_type,points,fine_amount,threshold_points) values ('จอดรถกีดขวาง / ผิดพื้นที่',5,0,10),('ไม่สวมหมวกนิรภัย',3,0,10),('ขับขี่บนทางเท้า',5,0,10) on conflict (violation_type) do nothing;
+insert into public.penalty_rules (violation_type,points,fine_amount,threshold_points) values ('จอดรถกีดขวาง / ผิดพื้นที่',5,0,10),('จอดขวางทางเข้าออก',5,0,10),('จอดบนทางเท้า',5,0,10),('จอดกีดขวางรถคันอื่น',5,0,10) on conflict (violation_type) do nothing;
 alter table public.profiles enable row level security; alter table public.reports enable row level security;
 create or replace function public.is_admin() returns boolean language sql security definer set search_path = public as $$ select exists (select 1 from public.profiles where id=auth.uid() and role in ('admin','super_admin')); $$;
 create policy "users read own profile" on public.profiles for select using (auth.uid()=id);
