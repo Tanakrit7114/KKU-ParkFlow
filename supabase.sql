@@ -1,4 +1,6 @@
 create table if not exists public.profiles (id uuid primary key references auth.users(id) on delete cascade, email text not null, name text, role text not null default 'student' check (role in ('student','staff','admin','super_admin','tester')), created_at timestamptz default now());
+alter table public.profiles add column if not exists faculty text;
+alter table public.profiles add column if not exists student_year integer;
 alter table public.profiles drop constraint if exists profiles_role_check;
 alter table public.profiles add constraint profiles_role_check check (role in ('student','staff','admin','super_admin','tester'));
 create table if not exists public.reports (id uuid primary key default gen_random_uuid(), reporter_id uuid not null references public.profiles(id), plate_number text, description text not null, incident_datetime timestamptz not null, latitude numeric, longitude numeric, evidence_path text, status text not null default 'PENDING' check (status in ('PENDING','UNDER_REVIEW','APPROVED','REJECTED','REQUEST_INFO')), ai_confidence numeric, ai_flags jsonb default '[]', reviewed_by uuid references public.profiles(id), reviewed_at timestamptz, created_at timestamptz default now());
