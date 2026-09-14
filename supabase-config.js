@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Supabase URL and anon key are safe for browser use when Row Level Security is enabled.
 // Never put the service_role key here.
-const SUPABASE_URL='https://YOUR_PROJECT.supabase.co';
+const SUPABASE_URL='https://zjolbhatwstmxcojznyd.supabase.co';
 const SUPABASE_ANON_KEY='YOUR_SUPABASE_ANON_KEY';
 const configured=!SUPABASE_URL.includes('YOUR_')&&!SUPABASE_ANON_KEY.includes('YOUR_');
 const supabase=configured?createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
