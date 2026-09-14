@@ -11,6 +11,10 @@
 5. ตั้ง Supabase Auth Redirect URL เป็น `https://ชื่อโปรเจกต์.vercel.app/`
 6. เพิ่ม URL เดียวกันใน Google Cloud OAuth Authorized redirect URLs
 
+## Database / ER Diagram
+
+ใช้ `supabase.sql` เป็น schema หลักสำหรับระบบที่ deploy อยู่บน Vercel + Supabase ดูความสัมพันธ์ของตารางได้ที่ [`docs/ER-DIAGRAM.md`](docs/ER-DIAGRAM.md) ส่วน `db/schema.sql` เป็น schema เก่าของ Express/PostgreSQL demo และไม่ควรนำไปรันปนกับ Supabase schema
+
 ## Push GitHub
 
 ```bash
