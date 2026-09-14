@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Never put the service_role key here.
 const SUPABASE_URL='https://zjolbhatwstmxcojznyd.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_V_JnaRXLYFjNrDysOFK5pA_5bCpyHXP';
-const ADMIN_EMAIL='tanakritk21@gmail.com';
+const ADMIN_EMAIL='tanakrit.k@kkumail.com';
 const configured=!SUPABASE_URL.includes('YOUR_')&&!SUPABASE_ANON_KEY.includes('YOUR_');
 const supabase=configured?createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
 window.kkuSupabase=supabase;
