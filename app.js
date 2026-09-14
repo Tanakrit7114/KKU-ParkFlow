@@ -14,4 +14,4 @@ function renderAdmin(){const p=document.querySelector('.review-panel');if(!p)ret
 function update(b,status,msg){const r=reports.find(x=>x.id===b.closest('.queue').dataset.id);if(r){r.status=status;save();toast(msg);renderAdmin()}}
 renderHome();
 const loginButton=document.querySelector('#google-login');if(loginButton)loginButton.onclick=()=>window.startKKULogin?.();
-const logoutButtons=[document.querySelector('#logout-sidebar')].filter(Boolean);logoutButtons.forEach(b=>b.onclick=()=>window.logoutKKU?.());
+const logoutButtons=[document.querySelector('#logout-sidebar'),document.querySelector('#logout-top')].filter(Boolean);logoutButtons.forEach(b=>b.onclick=()=>window.logoutKKU?.());
