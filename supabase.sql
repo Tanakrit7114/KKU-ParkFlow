@@ -23,6 +23,8 @@ insert into public.penalty_rules (violation_type,points,fine_amount,threshold_po
 alter table public.profiles enable row level security; alter table public.reports enable row level security;
 create or replace function public.is_admin() returns boolean language sql security definer set search_path = public as $$ select exists (select 1 from public.profiles where id=auth.uid() and role in ('admin','super_admin')); $$;
 create policy "users read own profile" on public.profiles for select using (auth.uid()=id);
+drop policy if exists "admins read reporter profiles" on public.profiles;
+create policy "admins read reporter profiles" on public.profiles for select using (public.is_admin());
 create policy "users create own profile" on public.profiles for insert with check (auth.uid()=id);
 create policy "users update own profile" on public.profiles for update using (auth.uid()=id) with check (auth.uid()=id);
 create or replace function public.prevent_role_escalation() returns trigger language plpgsql security definer set search_path = public as $$ begin if old.role is distinct from new.role and current_user not in ('postgres','supabase_admin') and coalesce(auth.role(),'') <> 'service_role' then raise exception 'role can only be changed by a server administrator'; end if; return new; end; $$;
