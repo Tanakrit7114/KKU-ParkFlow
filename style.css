@@ -6,3 +6,4 @@
 .email-label{font-size:11px;color:#7f8ba5;max-width:180px;overflow:hidden;text-overflow:ellipsis}.logout-label{display:inline;color:#c65360;font-size:11px;font-weight:700;white-space:nowrap}.user-pill:hover{border-color:#f0cdd2;background:#fff8f8}.user-pill:hover .logout-label{color:#a84250}
 .queue-image{overflow:hidden;position:relative}.queue-image img{width:100%;height:100%;object-fit:cover;display:block}.queue-image small{position:absolute;bottom:5px;left:6px;right:6px;background:#101a37cc;border-radius:4px;padding:2px}.reporter-detail{margin-top:8px!important;color:#4a628c!important}.reporter-detail b{color:var(--ink)}
 .queue-actions{min-width:190px}.decision-action,.decision-note{margin:0;width:100%;padding:9px;font-size:11px}.decision-note{border:1px solid #dce2ed;border-radius:7px}
+.request-info{border:1px solid #d8e1f2;border-radius:7px;padding:9px;background:#f4f7ff;color:#375ba8;font:600 11px inherit;cursor:pointer}
