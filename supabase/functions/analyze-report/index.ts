@@ -11,6 +11,8 @@ type AnalysisResult = {
   violation_type: string;
   confidence: number;
   evidence_notes: string;
+  ai_available?: boolean;
+  ai_error?: string;
 };
 
 function json(body: unknown, status = 200) {
@@ -121,7 +123,23 @@ Deno.serve(async (request) => {
     const { data: file, error: fileError } = await adminClient.storage.from("evidence").download(report.evidence_path);
     if (fileError || !file) return json({ error: "Evidence image could not be read" }, 404);
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const result = await callGoogleVision(bytes, report.description, file.type || "image/jpeg");
+    let result: AnalysisResult;
+    try {
+      result = await callGoogleVision(bytes, report.description, file.type || "image/jpeg");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Google Vision analysis failed";
+      const billingDisabled = message.includes("BILLING_DISABLED") || message.toLowerCase().includes("billing");
+      result = {
+        is_motorcycle: false,
+        violation_type: "ยังยืนยันไม่ได้ — Admin ต้องตรวจเอง",
+        confidence: 0,
+        evidence_notes: billingDisabled
+          ? "Google Vision ยังใช้ไม่ได้: โปรเจกต์ยังไม่เปิด Billing จึงต้องให้ Admin ตรวจหลักฐานเอง"
+          : `Google Vision วิเคราะห์ไม่ได้: ${message}`.slice(0, 500),
+        ai_available: false,
+        ai_error: message.slice(0, 240),
+      };
+    }
     const { data: updated, error: updateError } = await adminClient.from("reports").update({
       ai_confidence: result.confidence,
       ai_flags: result,
