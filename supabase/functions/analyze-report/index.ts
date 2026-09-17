@@ -30,9 +30,25 @@ function imageToBase64(bytes: Uint8Array) {
 }
 
 function extractText(payload: any) {
-  const content = payload?.choices?.[0]?.message?.content ?? payload?.output_text ?? payload?.text;
-  if (typeof content === "string") return content;
-  if (Array.isArray(content)) return content.map((part) => part?.text ?? "").join("\n");
+  const read = (value: any): string => {
+    if (typeof value === "string") return value;
+    if (Array.isArray(value)) return value.map(read).filter(Boolean).join("\n");
+    if (value && typeof value === "object") return read(value.text ?? value.content ?? value.value ?? value.output);
+    return "";
+  };
+  const candidates = [
+    payload?.choices?.[0]?.message?.content,
+    payload?.choices?.[0]?.text,
+    payload?.output_text,
+    payload?.text,
+    payload?.response?.text,
+    payload?.candidates?.[0]?.content?.parts,
+    payload?.output,
+  ];
+  for (const candidate of candidates) {
+    const text = read(candidate);
+    if (text) return text;
+  }
   return "";
 }
 
@@ -79,7 +95,12 @@ async function callIntelSphere(imageDataUrl: string, reportDescription: string) 
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(`IntelSphere request failed (${response.status})`);
-  return parseModelJson(extractText(payload));
+  const text = extractText(payload);
+  if (text) return parseModelJson(text);
+  if (payload && typeof payload === "object" && ("violation_type" in payload || "is_motorcycle" in payload || "confidence" in payload)) {
+    return parseModelJson(JSON.stringify(payload));
+  }
+  throw new Error("AI response did not contain readable text");
 }
 
 Deno.serve(async (request) => {
