@@ -30,10 +30,11 @@ function imageToBase64(bytes: Uint8Array) {
 }
 
 function extractText(payload: any) {
+  if (typeof payload === "string") return payload;
   const read = (value: any): string => {
     if (typeof value === "string") return value;
     if (Array.isArray(value)) return value.map(read).filter(Boolean).join("\n");
-    if (value && typeof value === "object") return read(value.text ?? value.content ?? value.value ?? value.output);
+    if (value && typeof value === "object") return read(value.text ?? value.content ?? value.value ?? value.output ?? value.response ?? value.result ?? value.generated_text ?? value.message);
     return "";
   };
   const candidates = [
@@ -41,7 +42,10 @@ function extractText(payload: any) {
     payload?.choices?.[0]?.text,
     payload?.output_text,
     payload?.text,
-    payload?.response?.text,
+    payload?.response,
+    payload?.result,
+    payload?.generated_text,
+    payload?.data,
     payload?.candidates?.[0]?.content?.parts,
     payload?.output,
   ];
@@ -93,7 +97,9 @@ async function callIntelSphere(imageDataUrl: string, reportDescription: string) 
       ] }],
     }),
   });
-  const payload = await response.json().catch(() => ({}));
+  const raw = await response.text();
+  let payload: any = raw;
+  try { payload = JSON.parse(raw); } catch { /* Some gateways return plain text. */ }
   if (!response.ok) throw new Error(`IntelSphere request failed (${response.status})`);
   const text = extractText(payload);
   if (text) return parseModelJson(text);
