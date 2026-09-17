@@ -13,6 +13,11 @@ type AnalysisResult = {
   evidence_notes: string;
   ai_available?: boolean;
   ai_error?: string;
+  ai_image_available?: boolean;
+  ai_generated?: boolean;
+  ai_image_confidence?: number;
+  ai_image_label?: string;
+  ai_image_error?: string;
 };
 
 function json(body: unknown, status = 200) {
@@ -35,11 +40,12 @@ function maxScore(items: Array<{ score?: number }>) {
   return items.reduce((highest, item) => Math.max(highest, Number(item.score) || 0), 0);
 }
 
-async function callHuggingFace(bytes: Uint8Array, reportDescription: string, mimeType: string): Promise<AnalysisResult> {
-  const token = Deno.env.get("HF_TOKEN");
-  if (!token) throw new Error("Hugging Face is not configured: add HF_TOKEN to Supabase Edge Function Secrets");
-
-  const model = Deno.env.get("HF_MODEL_ID") || "facebook/detr-resnet-50";
+async function callHuggingFaceModel(
+  bytes: Uint8Array,
+  token: string,
+  model: string,
+  parameters: Record<string, unknown>,
+) {
   const endpoint = `https://router.huggingface.co/hf-inference/models/${model}`;
   const response = await fetch(endpoint, {
     method: "POST",
@@ -50,7 +56,7 @@ async function callHuggingFace(bytes: Uint8Array, reportDescription: string, mim
     },
     body: JSON.stringify({
       inputs: imageToBase64(bytes),
-      parameters: { threshold: 0.25 },
+      parameters,
     }),
   });
   const payload = await response.json().catch(() => ({}));
@@ -58,8 +64,22 @@ async function callHuggingFace(bytes: Uint8Array, reportDescription: string, mim
     const apiError = payload?.error || payload?.message || "unknown error";
     throw new Error(`Hugging Face request failed (${response.status}): ${apiError}`);
   }
+  return payload;
+}
 
-  const detections = payload as Array<{ label?: string; score?: number; box?: Record<string, number> }>;
+async function callHuggingFace(bytes: Uint8Array, reportDescription: string, mimeType: string): Promise<AnalysisResult> {
+  const token = Deno.env.get("HF_TOKEN");
+  if (!token) throw new Error("Hugging Face is not configured: add HF_TOKEN to Supabase Edge Function Secrets");
+
+  const model = Deno.env.get("HF_MODEL_ID") || "facebook/detr-resnet-50";
+  const originModel = Deno.env.get("HF_IMAGE_ORIGIN_MODEL_ID") || "dima806/ai_vs_human_generated_image_detection";
+  const [vehicleResult, originResult] = await Promise.allSettled([
+    callHuggingFaceModel(bytes, token, model, { threshold: 0.25 }),
+    callHuggingFaceModel(bytes, token, originModel, { top_k: 2 }),
+  ]);
+  if (vehicleResult.status === "rejected") throw vehicleResult.reason;
+
+  const detections = vehicleResult.value as Array<{ label?: string; score?: number; box?: Record<string, number> }>;
   const motorcyclePattern = /motorcycle|motorbike|scooter|moped|จักรยานยนต์|มอเตอร์ไซค์/i;
   const motorcycleDetections = detections.filter((item) => motorcyclePattern.test(String(item.label || "")));
   const isMotorcycle = motorcycleDetections.length > 0;
@@ -69,20 +89,51 @@ async function callHuggingFace(bytes: Uint8Array, reportDescription: string, mim
     .map((item) => `${item.label || "ไม่ทราบวัตถุ"} ${Math.round((Number(item.score) || 0) * 100)}%`)
     .filter(Boolean);
 
+  const result: AnalysisResult = {
+    is_motorcycle: isMotorcycle,
+    violation_type: isMotorcycle ? "ตรวจพบรถจักรยานยนต์ — รอ Admin ตรวจสอบการจอด" : "ไม่พบรถจักรยานยนต์ชัดเจน",
+    confidence: Math.max(0, Math.min(100, confidence)),
+    evidence_notes: "",
+    ai_available: true,
+  };
+
   const notes = [
     `Hugging Face ตรวจด้วยโมเดล ${model} และภาพชนิด ${mimeType || "ไม่ระบุ"}`,
     `คำอธิบายผู้แจ้ง: ${reportDescription || "ไม่มี"}`,
     detectedLabels.length ? `วัตถุที่ตรวจพบ: ${detectedLabels.join(", ")}` : "ไม่พบวัตถุที่ชัดเจน",
-    "ผลนี้เป็นการช่วยคัดกรอง ไม่ใช่คำตัดสินลงโทษแทน Admin",
-  ].join(" | ");
+  ];
 
-  return {
-    is_motorcycle: isMotorcycle,
-    violation_type: isMotorcycle ? "ตรวจพบรถจักรยานยนต์ — รอ Admin ตรวจสอบการจอด" : "ไม่พบรถจักรยานยนต์ชัดเจน",
-    confidence: Math.max(0, Math.min(100, confidence)),
-    evidence_notes: notes.slice(0, 500),
-    ai_available: true,
-  };
+  if (originResult.status === "fulfilled") {
+    const originScores = originResult.value as Array<{ label?: string; score?: number }>;
+    const ranked = originScores
+      .map((item) => ({ label: String(item.label || "unknown"), score: Number(item.score) || 0 }))
+      .sort((a, b) => b.score - a.score);
+    const aiScore = ranked
+      .filter((item) => /ai|generated|synthetic|fake/i.test(item.label))
+      .reduce((score, item) => Math.max(score, item.score), 0);
+    const humanScore = ranked
+      .filter((item) => /human|real|authentic|photo/i.test(item.label))
+      .reduce((score, item) => Math.max(score, item.score), 0);
+    const top = ranked[0];
+    const generated = aiScore > humanScore || (!humanScore && !!top && /ai|generated|synthetic|fake/i.test(top.label));
+    const imageConfidence = Math.round(Math.max(aiScore, humanScore, top?.score || 0) * 100);
+    result.ai_image_available = true;
+    result.ai_generated = generated;
+    result.ai_image_confidence = Math.max(0, Math.min(100, imageConfidence));
+    result.ai_image_label = top?.label || "unknown";
+    notes.push(
+      `ตรวจแหล่งที่มาภาพด้วยโมเดล ${originModel}: ${generated ? "มีแนวโน้มภาพที่สร้างด้วย AI" : "มีแนวโน้มภาพถ่ายจริง"} ${result.ai_image_confidence}%`,
+    );
+  } else {
+    const message = originResult.reason instanceof Error ? originResult.reason.message : "image-origin analysis failed";
+    result.ai_image_available = false;
+    result.ai_image_error = message.slice(0, 240);
+    notes.push(`ตรวจแหล่งที่มาภาพไม่ได้: ${message}`);
+  }
+
+  notes.push("ผลนี้เป็นการช่วยคัดกรอง ไม่ใช่คำตัดสินลงโทษแทน Admin");
+  result.evidence_notes = notes.join(" | ").slice(0, 500);
+  return result;
 }
 
 Deno.serve(async (request) => {
@@ -125,6 +176,8 @@ Deno.serve(async (request) => {
         evidence_notes: `Hugging Face วิเคราะห์ไม่ได้: ${message}`.slice(0, 500),
         ai_available: false,
         ai_error: message.slice(0, 240),
+        ai_image_available: false,
+        ai_image_error: message.slice(0, 240),
       };
     }
     const { data: updated, error: updateError } = await adminClient.from("reports").update({
