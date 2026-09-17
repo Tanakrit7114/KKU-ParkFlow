@@ -31,60 +31,48 @@ function imageToBase64(bytes: Uint8Array) {
   return btoa(binary);
 }
 
-function likelihoodName(value: unknown) {
-  return String(value || "UNKNOWN").toLowerCase().replace(/_/g, " ");
-}
-
 function maxScore(items: Array<{ score?: number }>) {
   return items.reduce((highest, item) => Math.max(highest, Number(item.score) || 0), 0);
 }
 
-async function callGoogleVision(bytes: Uint8Array, reportDescription: string, mimeType: string): Promise<AnalysisResult> {
-  const apiKey = Deno.env.get("GOOGLE_VISION_API_KEY");
-  if (!apiKey) throw new Error("Google Vision is not configured");
+async function callHuggingFace(bytes: Uint8Array, reportDescription: string, mimeType: string): Promise<AnalysisResult> {
+  const token = Deno.env.get("HF_TOKEN");
+  if (!token) throw new Error("Hugging Face is not configured: add HF_TOKEN to Supabase Edge Function Secrets");
 
-  const endpoint = `https://vision.googleapis.com/v1/images:annotate?key=${encodeURIComponent(apiKey)}`;
+  const model = Deno.env.get("HF_MODEL_ID") || "facebook/detr-resnet-50";
+  const endpoint = `https://router.huggingface.co/hf-inference/models/${model}`;
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
     body: JSON.stringify({
-      requests: [{
-        image: { content: imageToBase64(bytes) },
-        features: [
-          { type: "LABEL_DETECTION", maxResults: 20 },
-          { type: "OBJECT_LOCALIZATION", maxResults: 20 },
-          { type: "SAFE_SEARCH_DETECTION" },
-        ],
-      }],
+      inputs: imageToBase64(bytes),
+      parameters: { threshold: 0.25 },
     }),
   });
   const payload = await response.json().catch(() => ({}));
-  const visionResponse = payload?.responses?.[0] || {};
-  if (!response.ok || visionResponse.error) {
-    const apiError = payload?.error?.message || visionResponse.error?.message || "unknown error";
-    throw new Error(`Google Vision request failed (${response.status}): ${apiError}`);
+  if (!response.ok || !Array.isArray(payload)) {
+    const apiError = payload?.error || payload?.message || "unknown error";
+    throw new Error(`Hugging Face request failed (${response.status}): ${apiError}`);
   }
 
-  const labels = Array.isArray(visionResponse.labelAnnotations) ? visionResponse.labelAnnotations : [];
-  const objects = Array.isArray(visionResponse.localizedObjectAnnotations) ? visionResponse.localizedObjectAnnotations : [];
+  const detections = payload as Array<{ label?: string; score?: number; box?: Record<string, number> }>;
   const motorcyclePattern = /motorcycle|motorbike|scooter|moped|จักรยานยนต์|มอเตอร์ไซค์/i;
-  const motorcycleLabels = labels.filter((item: any) => motorcyclePattern.test(String(item.description || "")));
-  const motorcycleObjects = objects.filter((item: any) => motorcyclePattern.test(String(item.name || "")));
-  const isMotorcycle = motorcycleLabels.length > 0 || motorcycleObjects.length > 0;
-  const confidence = Math.round(Math.max(maxScore(motorcycleLabels), maxScore(motorcycleObjects)) * 100);
-  const safe = visionResponse.safeSearchAnnotation || {};
-  const safetyFlags = Object.entries(safe)
-    .filter(([, value]) => !["unknown", "very unlikely", "unlikely"].includes(likelihoodName(value)))
-    .map(([name, value]) => `${name}: ${likelihoodName(value)}`);
-  const detectedLabels = labels.slice(0, 6).map((item: any) => item.description).filter(Boolean);
-  const detectedObjects = objects.slice(0, 6).map((item: any) => item.name).filter(Boolean);
+  const motorcycleDetections = detections.filter((item) => motorcyclePattern.test(String(item.label || "")));
+  const isMotorcycle = motorcycleDetections.length > 0;
+  const confidence = Math.round(maxScore(motorcycleDetections) * 100);
+  const detectedLabels = detections
+    .slice(0, 8)
+    .map((item) => `${item.label || "ไม่ทราบวัตถุ"} ${Math.round((Number(item.score) || 0) * 100)}%`)
+    .filter(Boolean);
 
   const notes = [
-    `Google Vision ตรวจด้วยภาพชนิด ${mimeType || "ไม่ระบุ"}`,
+    `Hugging Face ตรวจด้วยโมเดล ${model} และภาพชนิด ${mimeType || "ไม่ระบุ"}`,
     `คำอธิบายผู้แจ้ง: ${reportDescription || "ไม่มี"}`,
-    detectedLabels.length ? `ป้ายกำกับ: ${detectedLabels.join(", ")}` : "ไม่พบป้ายกำกับที่ชัดเจน",
-    detectedObjects.length ? `วัตถุ: ${detectedObjects.join(", ")}` : "ไม่พบวัตถุที่ชัดเจน",
-    safetyFlags.length ? `สัญญาณเนื้อหาที่ควรตรวจสอบ: ${safetyFlags.join(", ")}` : "ไม่พบสัญญาณเนื้อหาเสี่ยงจาก SafeSearch",
+    detectedLabels.length ? `วัตถุที่ตรวจพบ: ${detectedLabels.join(", ")}` : "ไม่พบวัตถุที่ชัดเจน",
     "ผลนี้เป็นการช่วยคัดกรอง ไม่ใช่คำตัดสินลงโทษแทน Admin",
   ].join(" | ");
 
@@ -93,6 +81,7 @@ async function callGoogleVision(bytes: Uint8Array, reportDescription: string, mi
     violation_type: isMotorcycle ? "ตรวจพบรถจักรยานยนต์ — รอ Admin ตรวจสอบการจอด" : "ไม่พบรถจักรยานยนต์ชัดเจน",
     confidence: Math.max(0, Math.min(100, confidence)),
     evidence_notes: notes.slice(0, 500),
+    ai_available: true,
   };
 }
 
@@ -126,17 +115,14 @@ Deno.serve(async (request) => {
     const bytes = new Uint8Array(await file.arrayBuffer());
     let result: AnalysisResult;
     try {
-      result = await callGoogleVision(bytes, report.description, file.type || "image/jpeg");
+      result = await callHuggingFace(bytes, report.description, file.type || "image/jpeg");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Google Vision analysis failed";
-      const billingDisabled = response.status === 403 || message.includes("BILLING_DISABLED") || message.toLowerCase().includes("billing");
+      const message = error instanceof Error ? error.message : "Hugging Face analysis failed";
       result = {
         is_motorcycle: false,
         violation_type: "ยังยืนยันไม่ได้ — Admin ต้องตรวจเอง",
         confidence: 0,
-        evidence_notes: billingDisabled
-          ? "Google Vision ยังใช้ไม่ได้: โปรเจกต์ยังไม่เปิด Billing จึงต้องให้ Admin ตรวจหลักฐานเอง"
-          : `Google Vision วิเคราะห์ไม่ได้: ${message}`.slice(0, 500),
+        evidence_notes: `Hugging Face วิเคราะห์ไม่ได้: ${message}`.slice(0, 500),
         ai_available: false,
         ai_error: message.slice(0, 240),
       };

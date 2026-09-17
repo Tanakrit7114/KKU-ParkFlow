@@ -33,19 +33,21 @@ git push origin main
 
 ระบบจะอนุญาตเฉพาะ Google account ที่ลงท้ายด้วย `@kkumail.com` หรือ `@kku.ac.th`; ห้ามนำ `service_role key` ใส่ใน Frontend
 
-## เชื่อม Google Cloud Vision วิเคราะห์ภาพ
+## เชื่อม Hugging Face วิเคราะห์ภาพ
 
-โค้ดมี Edge Function ที่ชื่อ `analyze-report` แล้ว โดยจะอ่านภาพจาก Supabase Storage, ส่งภาพไปยัง Google Cloud Vision และบันทึก `ai_confidence` กับ `ai_flags` กลับไปที่ `reports` โดยเก็บคีย์ไว้ใน Supabase Edge Function Secret เพื่อไม่เปิดคีย์ให้ Browser
+โค้ดมี Edge Function ที่ชื่อ `analyze-report` แล้ว โดยจะอ่านภาพจาก Supabase Storage, ส่งภาพไปยัง Hugging Face Inference Providers ด้วยโมเดล object detection และบันทึก `ai_confidence` กับ `ai_flags` กลับไปที่ `reports` โดยเก็บโทเคนไว้ใน Supabase Edge Function Secret เพื่อไม่เปิดคีย์ให้ Browser
 
-ฟังก์ชันจะใช้ Label Detection, Object Localization และ SafeSearch เพื่อช่วยตรวจว่าภาพมีรถจักรยานยนต์หรือไม่ พร้อมส่งสัญญาณเนื้อหาที่ควรตรวจสอบให้ Admin เห็น ผลลัพธ์เป็นการคัดกรอง ไม่ใช่คำตัดสินลงโทษอัตโนมัติ
+ฟังก์ชันจะใช้ Object Detection เพื่อช่วยตรวจว่าภาพมีรถจักรยานยนต์หรือไม่ พร้อมแสดงวัตถุและคะแนนความมั่นใจให้ Admin เห็น ผลลัพธ์เป็นการคัดกรอง ไม่ใช่คำตัดสินลงโทษอัตโนมัติ และยังไม่สามารถยืนยันได้ว่าภาพเป็นภาพจริงหรือภาพกลั่นแกล้งแทนมนุษย์
 
-นำค่า `GOOGLE_VISION_API_KEY` ไปใส่ใน Supabase Dashboard → Edge Functions → Secrets แล้ว deploy function ด้วย Supabase CLI:
+สร้าง Hugging Face fine-grained token ที่อนุญาต `Make calls to Inference Providers` แล้วนำค่าไปใส่ใน Supabase Dashboard → Edge Functions → Secrets ในชื่อ `HF_TOKEN` จากนั้น deploy function ด้วย Supabase CLI:
+
+ระบบใช้โมเดล `facebook/detr-resnet-50` เป็นค่าเริ่มต้น หากต้องการเปลี่ยนโมเดลให้เพิ่ม Secret ชื่อ `HF_MODEL_ID` โดยต้องเป็นโมเดลที่รองรับงาน `object-detection`
 
 ```bash
 supabase functions deploy analyze-report
 ```
 
-ถ้ายังไม่ใส่ Secret รายงานยังถูกบันทึกตามปกติ แต่จะยังไม่มีค่า AI confidence จนกว่าจะตั้งค่า Google Vision สำเร็จ
+ถ้ายังไม่ใส่ `HF_TOKEN` รายงานยังถูกบันทึกตามปกติ แต่หน้า Admin จะแสดงว่า AI ใช้งานไม่ได้พร้อมเหตุผล และเปิดให้ Admin ตรวจหลักฐานเอง
 
 ## ข้อจำกัด
 
