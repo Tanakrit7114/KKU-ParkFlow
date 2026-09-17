@@ -129,7 +129,7 @@ Deno.serve(async (request) => {
       result = await callGoogleVision(bytes, report.description, file.type || "image/jpeg");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Google Vision analysis failed";
-      const billingDisabled = message.includes("BILLING_DISABLED") || message.toLowerCase().includes("billing");
+      const billingDisabled = response.status === 403 || message.includes("BILLING_DISABLED") || message.toLowerCase().includes("billing");
       result = {
         is_motorcycle: false,
         violation_type: "ยังยืนยันไม่ได้ — Admin ต้องตรวจเอง",
