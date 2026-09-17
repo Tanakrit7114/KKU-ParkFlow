@@ -33,6 +33,25 @@ git push origin main
 
 ระบบจะอนุญาตเฉพาะ Google account ที่ลงท้ายด้วย `@kkumail.com` หรือ `@kku.ac.th`; ห้ามนำ `service_role key` ใส่ใน Frontend
 
+## เชื่อม KKU IntelSphere วิเคราะห์ภาพ
+
+โค้ดมี Edge Function ที่ชื่อ `analyze-report` แล้ว โดยจะอ่านภาพจาก Supabase Storage, ส่งไปยัง endpoint ของ KKU IntelSphere และบันทึก `ai_confidence` กับ `ai_flags` กลับไปที่ `reports` ระบบใช้รูปแบบ OpenAI-compatible multimodal (`/chat/completions`) เพื่อไม่เปิด Token ให้ Browser
+
+ก่อนใช้งานจริงต้องมีข้อมูลจากผู้ดูแล KKU IntelSphere:
+
+1. URL แบบเต็มของ endpoint ที่รับภาพ
+2. API Token/วิธี Authentication
+3. ชื่อโมเดลที่รองรับภาพ
+4. Quota และนโยบายการเก็บภาพ
+
+นำค่าไปใส่ใน Supabase Dashboard → Edge Functions → Secrets ในชื่อ `INTELSPHERE_API_URL`, `INTELSPHERE_API_KEY` และ `INTELSPHERE_MODEL` แล้ว deploy function ด้วย Supabase CLI:
+
+```bash
+supabase functions deploy analyze-report
+```
+
+ถ้ายังไม่ใส่ Secrets รายงานยังถูกบันทึกตามปกติ แต่จะยังไม่มีค่า AI confidence จนกว่าจะตั้งค่า endpoint สำเร็จ
+
 ## ข้อจำกัด
 
 AI, email notification และ Admin actions ที่ใช้ secret ควรย้ายไป Supabase Edge Functions ก่อน production เพื่อไม่เปิด secret ให้ Browser และควรตรวจ PDPA ก่อนใช้ข้อมูลจริง
