@@ -29,85 +29,68 @@ function imageToBase64(bytes: Uint8Array) {
   return btoa(binary);
 }
 
-function extractText(payload: any) {
-  if (typeof payload === "string") return payload;
-  const read = (value: any): string => {
-    if (typeof value === "string") return value;
-    if (Array.isArray(value)) return value.map(read).filter(Boolean).join("\n");
-    if (value && typeof value === "object") return read(value.text ?? value.content ?? value.value ?? value.output ?? value.response ?? value.result ?? value.generated_text ?? value.message ?? value.answer ?? value.completion ?? value.choices ?? value.candidates ?? value.data);
-    return "";
-  };
-  const candidates = [
-    payload?.choices?.[0]?.message?.content,
-    payload?.choices?.[0]?.text,
-    payload?.output_text,
-    payload?.text,
-    payload?.response,
-    payload?.result,
-    payload?.generated_text,
-    payload?.message,
-    payload?.data,
-    payload?.candidates?.[0]?.content?.parts,
-    payload?.output,
-  ];
-  for (const candidate of candidates) {
-    const text = read(candidate);
-    if (text) return text;
-  }
-  return "";
+function likelihoodName(value: unknown) {
+  return String(value || "UNKNOWN").toLowerCase().replace(/_/g, " ");
 }
 
-function parseModelJson(text: string): AnalysisResult {
-  const cleaned = text.replace(/```json|```/gi, "").trim();
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
-  if (start < 0 || end < start) throw new Error("AI response was not valid JSON");
-  const value = JSON.parse(cleaned.slice(start, end + 1));
-  let confidence = Number(value.confidence);
-  if (!Number.isFinite(confidence)) confidence = 0;
-  if (confidence >= 0 && confidence <= 1) confidence *= 100;
-  confidence = Math.max(0, Math.min(100, Math.round(confidence)));
-  return {
-    is_motorcycle: Boolean(value.is_motorcycle),
-    violation_type: String(value.violation_type || "ไม่ระบุ").slice(0, 120),
-    confidence,
-    evidence_notes: String(value.evidence_notes || "ไม่มีหมายเหตุเพิ่มเติม").slice(0, 500),
-  };
+function maxScore(items: Array<{ score?: number }>) {
+  return items.reduce((highest, item) => Math.max(highest, Number(item.score) || 0), 0);
 }
 
-async function callIntelSphere(imageDataUrl: string, reportDescription: string) {
-  const endpoint = Deno.env.get("INTELSPHERE_API_URL");
-  const apiKey = Deno.env.get("INTELSPHERE_API_KEY");
-  const model = Deno.env.get("INTELSPHERE_MODEL") || "default";
-  if (!endpoint || !apiKey) throw new Error("IntelSphere is not configured");
+async function callGoogleVision(bytes: Uint8Array, reportDescription: string, mimeType: string): Promise<AnalysisResult> {
+  const apiKey = Deno.env.get("GOOGLE_VISION_API_KEY");
+  if (!apiKey) throw new Error("Google Vision is not configured");
 
-  const prompt = `ตรวจภาพหลักฐานสำหรับระบบ KKU ParkFlow โดยใช้คำอธิบายผู้แจ้ง: ${reportDescription || "ไม่มี"}
-พิจารณาเฉพาะรถจักรยานยนต์และการจอดกีดขวาง/ผิดพื้นที่ ห้ามตัดสินลงโทษแทนเจ้าหน้าที่
-ตอบเป็น JSON เท่านั้น ตามรูปแบบนี้:
-{"is_motorcycle":true,"violation_type":"จอดบนทางเท้า","confidence":0-100,"evidence_notes":"..."}`;
+  const endpoint = `https://vision.googleapis.com/v1/images:annotate?key=${encodeURIComponent(apiKey)}`;
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model,
-      temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [{ role: "user", content: [
-        { type: "text", text: prompt },
-        { type: "image_url", image_url: { url: imageDataUrl } },
-      ] }],
+      requests: [{
+        image: { content: imageToBase64(bytes) },
+        features: [
+          { type: "LABEL_DETECTION", maxResults: 20 },
+          { type: "OBJECT_LOCALIZATION", maxResults: 20 },
+          { type: "SAFE_SEARCH_DETECTION" },
+        ],
+      }],
     }),
   });
-  const raw = await response.text();
-  let payload: any = raw;
-  try { payload = JSON.parse(raw); } catch { /* Some gateways return plain text. */ }
-  if (!response.ok) throw new Error(`IntelSphere request failed (${response.status})`);
-  const text = extractText(payload);
-  if (text) return parseModelJson(text);
-  if (payload && typeof payload === "object" && ("violation_type" in payload || "is_motorcycle" in payload || "confidence" in payload)) {
-    return parseModelJson(JSON.stringify(payload));
+  const payload = await response.json().catch(() => ({}));
+  const visionResponse = payload?.responses?.[0] || {};
+  if (!response.ok || visionResponse.error) {
+    throw new Error(`Google Vision request failed (${response.status}): ${visionResponse.error?.message || "unknown error"}`);
   }
-  throw new Error("AI response did not contain readable text");
+
+  const labels = Array.isArray(visionResponse.labelAnnotations) ? visionResponse.labelAnnotations : [];
+  const objects = Array.isArray(visionResponse.localizedObjectAnnotations) ? visionResponse.localizedObjectAnnotations : [];
+  const motorcyclePattern = /motorcycle|motorbike|scooter|moped|จักรยานยนต์|มอเตอร์ไซค์/i;
+  const motorcycleLabels = labels.filter((item: any) => motorcyclePattern.test(String(item.description || "")));
+  const motorcycleObjects = objects.filter((item: any) => motorcyclePattern.test(String(item.name || "")));
+  const isMotorcycle = motorcycleLabels.length > 0 || motorcycleObjects.length > 0;
+  const confidence = Math.round(Math.max(maxScore(motorcycleLabels), maxScore(motorcycleObjects)) * 100);
+  const safe = visionResponse.safeSearchAnnotation || {};
+  const safetyFlags = Object.entries(safe)
+    .filter(([, value]) => !["unknown", "very unlikely", "unlikely"].includes(likelihoodName(value)))
+    .map(([name, value]) => `${name}: ${likelihoodName(value)}`);
+  const detectedLabels = labels.slice(0, 6).map((item: any) => item.description).filter(Boolean);
+  const detectedObjects = objects.slice(0, 6).map((item: any) => item.name).filter(Boolean);
+
+  const notes = [
+    `Google Vision ตรวจด้วยภาพชนิด ${mimeType || "ไม่ระบุ"}`,
+    `คำอธิบายผู้แจ้ง: ${reportDescription || "ไม่มี"}`,
+    detectedLabels.length ? `ป้ายกำกับ: ${detectedLabels.join(", ")}` : "ไม่พบป้ายกำกับที่ชัดเจน",
+    detectedObjects.length ? `วัตถุ: ${detectedObjects.join(", ")}` : "ไม่พบวัตถุที่ชัดเจน",
+    safetyFlags.length ? `สัญญาณเนื้อหาที่ควรตรวจสอบ: ${safetyFlags.join(", ")}` : "ไม่พบสัญญาณเนื้อหาเสี่ยงจาก SafeSearch",
+    "ผลนี้เป็นการช่วยคัดกรอง ไม่ใช่คำตัดสินลงโทษแทน Admin",
+  ].join(" | ");
+
+  return {
+    is_motorcycle: isMotorcycle,
+    violation_type: isMotorcycle ? "ตรวจพบรถจักรยานยนต์ — รอ Admin ตรวจสอบการจอด" : "ไม่พบรถจักรยานยนต์ชัดเจน",
+    confidence: Math.max(0, Math.min(100, confidence)),
+    evidence_notes: notes.slice(0, 500),
+  };
 }
 
 Deno.serve(async (request) => {
@@ -138,7 +121,7 @@ Deno.serve(async (request) => {
     const { data: file, error: fileError } = await adminClient.storage.from("evidence").download(report.evidence_path);
     if (fileError || !file) return json({ error: "Evidence image could not be read" }, 404);
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const result = await callIntelSphere(`data:${file.type || "image/jpeg"};base64,${imageToBase64(bytes)}`, report.description);
+    const result = await callGoogleVision(bytes, report.description, file.type || "image/jpeg");
     const { data: updated, error: updateError } = await adminClient.from("reports").update({
       ai_confidence: result.confidence,
       ai_flags: result,
