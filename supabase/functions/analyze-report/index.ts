@@ -34,7 +34,7 @@ function extractText(payload: any) {
   const read = (value: any): string => {
     if (typeof value === "string") return value;
     if (Array.isArray(value)) return value.map(read).filter(Boolean).join("\n");
-    if (value && typeof value === "object") return read(value.text ?? value.content ?? value.value ?? value.output ?? value.response ?? value.result ?? value.generated_text ?? value.message);
+    if (value && typeof value === "object") return read(value.text ?? value.content ?? value.value ?? value.output ?? value.response ?? value.result ?? value.generated_text ?? value.message ?? value.answer ?? value.completion ?? value.choices ?? value.candidates ?? value.data);
     return "";
   };
   const candidates = [
@@ -45,6 +45,7 @@ function extractText(payload: any) {
     payload?.response,
     payload?.result,
     payload?.generated_text,
+    payload?.message,
     payload?.data,
     payload?.candidates?.[0]?.content?.parts,
     payload?.output,
