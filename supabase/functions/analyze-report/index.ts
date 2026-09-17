@@ -61,7 +61,8 @@ async function callGoogleVision(bytes: Uint8Array, reportDescription: string, mi
   const payload = await response.json().catch(() => ({}));
   const visionResponse = payload?.responses?.[0] || {};
   if (!response.ok || visionResponse.error) {
-    throw new Error(`Google Vision request failed (${response.status}): ${visionResponse.error?.message || "unknown error"}`);
+    const apiError = payload?.error?.message || visionResponse.error?.message || "unknown error";
+    throw new Error(`Google Vision request failed (${response.status}): ${apiError}`);
   }
 
   const labels = Array.isArray(visionResponse.labelAnnotations) ? visionResponse.labelAnnotations : [];
