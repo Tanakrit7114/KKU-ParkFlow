@@ -8,3 +8,4 @@
 .queue-actions{min-width:190px}.decision-action,.decision-note{margin:0;width:100%;padding:9px;font-size:11px}.decision-note{border:1px solid #dce2ed;border-radius:7px}
 .request-info{border:1px solid #d8e1f2;border-radius:7px;padding:9px;background:#f4f7ff;color:#375ba8;font:600 11px inherit;cursor:pointer}
 .ai-origin{background:#f7f8fc;border-radius:7px;padding:9px 11px;color:#65749a;font-size:12px;margin-top:8px}.ai-origin b{color:#314e82}.ai-origin.ai-unavailable{color:#9b6f3a}
+.gps-status{display:block;margin:-14px 0 18px;color:#7d89a2;font-size:11px}.gps-status.loading{color:#b17b00}.gps-status.success{color:#15947e}.gps-status.error{color:#b04f5c}.report-coordinates{margin-top:8px!important;color:#4a628c!important;font-size:11px!important}.report-coordinates b{color:var(--ink)}
