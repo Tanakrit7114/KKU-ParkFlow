@@ -13,3 +13,117 @@
 .admin-tools{display:flex;align-items:center;gap:8px}.queue-image.empty{font-size:11px;letter-spacing:0;background:#e9edf5;color:#65718b;padding:8px}.report-plate{margin-top:8px!important;color:#4a628c!important;font-size:12px!important}.report-plate b{color:var(--ink);font-size:14px}
 .admin-analytics{background:#fff;border:1px solid var(--line);border-radius:14px;margin-top:22px;padding:20px}.analytics-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.analytics-head h3{margin:5px 0;font-size:20px}.analytics-head p{margin:0;color:var(--muted);font-size:12px}.mock-badge,.mock-tag{display:inline-block;background:#edf1ff;color:var(--blue);border-radius:99px;padding:6px 10px;font-size:11px;white-space:nowrap}.analytics-filters{display:grid;grid-template-columns:1.2fr repeat(4,1fr);gap:10px;margin:18px 0}.analytics-filters label{font-size:11px;color:var(--muted);margin:0}.analytics-filters select{margin:5px 0 0;padding:9px 10px;font-size:12px}.analytics-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}.analytics-stats>div{background:#f7f9ff;border:1px solid #e5eafb;border-radius:10px;padding:12px}.analytics-stats small,.analytics-stats b,.analytics-stats span{display:block}.analytics-stats small{color:var(--muted);font-size:11px}.analytics-stats b{font:700 20px 'Space Grotesk';margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.analytics-stats span{color:#15947e;font-size:11px;margin-top:3px}.analytics-columns{display:grid;grid-template-columns:1fr 1fr;gap:14px}.trend-card{border:1px solid var(--line);border-radius:11px;padding:16px;margin-top:14px;min-width:0}.trend-card h4{margin:0 0 14px;font-size:14px}.month-bars{display:grid;grid-template-columns:repeat(9,1fr);gap:7px;height:190px;align-items:end;border-bottom:1px solid var(--line);padding-top:14px}.month-bar{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;min-width:0}.month-bar span{color:var(--muted);font-size:9px;white-space:nowrap;transform:rotate(-35deg);transform-origin:center}.month-bar i{width:70%;max-width:28px;min-height:5px;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--teal),#5a7bfa);position:relative}.month-bar i b{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font:600 10px 'Space Grotesk';color:var(--ink);font-style:normal}.analytics-table-wrap{overflow:auto}.analytics-table{width:100%;border-collapse:collapse;font-size:11px}.analytics-table th,.analytics-table td{text-align:left;padding:9px 7px;border-bottom:1px solid var(--line);white-space:nowrap}.analytics-table th{color:var(--muted);font-weight:600}.analytics-table td{color:#4a628c}.analytics-table td b{color:var(--ink)}.analytics-status{background:#fff4d1;color:#a97200;border-radius:5px;padding:4px 6px}.analytics-table .mock-tag{padding:3px 6px;font-size:9px}@media(max-width:850px){.analytics-filters,.analytics-stats{grid-template-columns:1fr 1fr}.analytics-columns{grid-template-columns:1fr}.analytics-head{flex-direction:column}.month-bars{gap:3px}.month-bar span{font-size:8px}}
 .mock-gmail-panel{background:#fff;border:1px solid var(--line);border-radius:14px;margin-top:22px;padding:20px}.mock-gmail-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.mock-gmail-head h3{margin:5px 0;font-size:20px}.mock-gmail-head p{margin:0;color:var(--muted);font-size:12px}.mock-gmail-badge{background:#fff4d1;color:#a97200;border-radius:99px;padding:6px 10px;font-size:10px;font-weight:700;white-space:nowrap}.mock-gmail-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;margin-top:18px}.mock-gmail-panel label{font-size:12px;color:var(--muted);margin-bottom:7px}.mock-gmail-inputs{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}.mock-gmail-inputs input,.mock-gmail-select select{margin:0;padding:10px;font-size:12px}.mock-gmail-inputs button{padding:10px 13px;white-space:nowrap}.mock-gmail-panel small{display:block;color:#8b96ab;font-size:10px;margin-top:7px}.mock-gmail-status{min-height:20px;margin-top:12px;color:#168d7c;font-size:11px}.mock-gmail-columns{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}.mock-gmail-columns h4{font-size:13px;margin:0 0 8px}.mock-gmail-list{border:1px solid var(--line);border-radius:9px;max-height:145px;overflow:auto}.mock-gmail-row{position:relative;padding:9px 11px;border-bottom:1px solid var(--line)}.mock-gmail-row:last-child{border-bottom:0}.mock-gmail-row b,.mock-gmail-row small{display:block}.mock-gmail-row b{font-size:12px;color:var(--ink)}.mock-gmail-row small{font-size:10px;color:var(--muted);padding-right:50px}.mock-mail-status{position:absolute;right:10px;top:11px;color:#168d7c;font-size:9px;font-weight:700}.mock-gmail-empty{padding:14px;color:var(--muted);font-size:11px;margin:0}@media(max-width:850px){.mock-gmail-grid,.mock-gmail-columns{grid-template-columns:1fr}.mock-gmail-inputs{grid-template-columns:1fr}.mock-gmail-inputs button{width:100%}}
+
+/* Mobile layout: keep navigation usable without sacrificing content width. */
+@media (max-width: 640px){
+  body{font-size:15px;overflow-x:hidden}
+  .shell{display:block;min-height:100vh}
+  .sidebar{position:sticky;top:0;z-index:30;width:100%;padding:12px 12px 8px;background:var(--ink);box-shadow:0 4px 18px #07122d26}
+  .brand{margin:0 3px 10px;gap:8px}
+  .brand-mark{width:30px;height:30px;border-radius:8px;font-size:21px}
+  .brand b{font-size:18px}
+  .brand small{font-size:8px;letter-spacing:1.1px}
+  .profile{padding:9px 4px;border-top:1px solid #ffffff18;border-bottom:0;gap:8px}
+  .profile-copy b{font-size:12px}
+  .profile-copy small{font-size:10px}
+  .avatar{width:34px;height:34px;font-size:12px}
+  .online{right:7px;top:13px;width:7px;height:7px}
+  .logout-btn{width:34px;height:34px;font-size:18px}
+  nav{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  .nav-item{flex:0 0 auto;width:auto;min-width:max-content;justify-content:flex-start;padding:10px 12px;border-radius:9px;font-size:13px;gap:7px}
+  .nav-item span{display:inline}
+  .nav-item em{display:none}
+  .sidebar-foot{display:none}
+  .main{width:100%;max-width:none;padding:18px 14px 42px}
+  .topbar{gap:10px;align-items:center;margin-bottom:22px}
+  .topbar h1{font-size:22px;line-height:1.25;margin-top:5px}
+  .eyebrow{font-size:9px;letter-spacing:1.1px}
+  .top-actions{gap:6px;flex-shrink:0}
+  .icon-btn{padding:8px 10px;font-size:18px}
+  .user-pill{padding:7px 8px;gap:5px;font-size:0}
+  .user-pill .account-label,.user-pill .email-label{display:none}
+  .user-pill .logout-label{font-size:10px}
+  .hero{display:block;padding:24px 20px;min-height:0;border-radius:15px}
+  .hero h2{font-size:30px;margin:10px 0}
+  .hero p{font-size:13px;line-height:1.6;margin-bottom:18px}
+  .hero p br{display:none}
+  .hero-art{display:none}
+  .primary{min-height:44px;padding:11px 15px}
+  .section-head{align-items:flex-start;gap:10px;margin:26px 0 12px}
+  .section-head h3,.page-h2{font-size:20px;line-height:1.25}
+  .section-head .filter-btn,.section-head .primary{flex-shrink:0}
+  .cards{grid-template-columns:1fr;gap:10px}
+  .stat{padding:14px;min-height:76px}
+  .stat strong{font-size:23px}
+  .report-list{border-radius:11px}
+  .report-row{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:9px;padding:12px}
+  .report-thumb{width:62px;height:50px;font-size:8px}
+  .report-info{min-width:0}
+  .report-info b{font-size:12px;line-height:1.35}
+  .report-info small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .report-row>.status{grid-column:2;font-size:10px;justify-self:start}
+  .report-row>.chev{grid-column:3;grid-row:2}
+  .form-wrap{grid-template-columns:1fr;border-radius:14px}
+  .form-intro{padding:24px 20px}
+  .form-intro h2{font-size:30px;margin:10px 0}
+  .form-intro p{font-size:13px;line-height:1.6}
+  .privacy{margin-top:22px}
+  .form-wrap form{padding:22px 16px}
+  .form-grid{grid-template-columns:1fr;gap:0}
+  select,textarea,input{font-size:16px;padding:12px;margin-bottom:18px}
+  .upload{padding:18px 12px;margin-bottom:19px}
+  .location-picker{padding:10px;margin-bottom:18px}
+  .location-picker-head{align-items:flex-start;gap:8px}
+  .location-picker #location-map{height:220px;min-height:220px}
+  .location-tools{gap:7px}
+  .location-tools .filter-btn{min-height:46px;font-size:12px;padding:8px 6px}
+  .history-grid{grid-template-columns:1fr;gap:12px}
+  .history-card{padding:17px}
+  .history-card h3{font-size:22px}
+  .admin-tools{width:100%;flex-wrap:wrap}
+  .admin-tools .filter-btn{flex:1;min-height:42px;padding:9px 8px;font-size:12px}
+  .admin-stats{grid-template-columns:1fr 1fr;gap:9px}
+  .admin-stats>div{padding:13px 11px;min-height:88px}
+  .admin-stats b{font-size:24px}
+  .admin-stats small{font-size:11px}
+  .review-panel{margin-top:16px}
+  .panel-head{padding:14px;gap:8px;align-items:flex-start}
+  .panel-head span{font-size:10px;text-align:right}
+  .queue{display:grid;grid-template-columns:78px minmax(0,1fr);gap:11px;padding:14px}
+  .queue-image{width:78px;height:68px}
+  .queue-body h3{font-size:14px;line-height:1.35;margin:7px 0 3px}
+  .queue-body p{font-size:11px;line-height:1.45}
+  .reporter-detail{word-break:break-word}
+  .ai-check,.ai-origin{font-size:11px;line-height:1.45}
+  .ai-check span{float:none;display:block;margin-top:3px}
+  .queue-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0;width:100%}
+  .queue-actions .decision-action,.queue-actions .decision-note,.queue-actions .approve,.queue-actions .reject,.queue-actions .request-info,.queue-actions .reanalyze{grid-column:1/-1;min-height:44px;font-size:12px}
+  .queue-actions .approve,.queue-actions .reject{grid-column:auto}
+  .penalty{display:block;padding:20px;margin-top:16px}
+  .penalty p{font-size:11px}
+  .rule{border-left:0;border-top:1px solid #ffffff22;padding:13px 0 0;margin-top:14px}
+  .admin-analytics,.mock-gmail-panel{padding:15px;margin-top:16px}
+  .analytics-filters,.analytics-stats{grid-template-columns:1fr}
+  .analytics-columns,.mock-gmail-grid,.mock-gmail-columns{grid-template-columns:1fr}
+  .analytics-head,.mock-gmail-head{flex-direction:column;gap:9px}
+  .analytics-head h3,.mock-gmail-head h3{font-size:18px}
+  .analytics-table{font-size:10px}
+  .analytics-table th,.analytics-table td{padding:8px 6px}
+  .month-bars{height:160px;gap:2px}
+  .mock-gmail-inputs{grid-template-columns:1fr}
+  .mock-gmail-inputs input,.mock-gmail-inputs button,.mock-gmail-select select{min-height:44px;font-size:15px}
+  .mock-gmail-inputs button{width:100%}
+  .toast{left:14px;right:14px;bottom:14px;text-align:center;padding:12px 14px;font-size:13px}
+}
+
+@media (max-width: 380px){
+  .main{padding-left:10px;padding-right:10px}
+  .topbar h1{font-size:20px}
+  .top-actions .icon-btn{display:none}
+  .user-pill .logout-label{font-size:9px}
+  .hero{padding:20px 16px}
+  .admin-stats{gap:6px}
+  .admin-stats>div{padding:11px 8px}
+  .admin-stats b{font-size:21px}
+}
