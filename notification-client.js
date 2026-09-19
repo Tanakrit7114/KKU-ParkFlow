@@ -7,6 +7,7 @@ const installNotificationSender = () => {
   window.decideCloudReport = async (id, status, action, note = '') => {
     const result = await queuedDecideCloudReport(id, status, action, note);
     if (status !== 'APPROVED' || action !== 'EMAIL' || !window.kkuSupabase) return result;
+    if (window.mockGmailSend) return window.mockGmailSend(id, note, result);
 
     const { data: notification, error: notificationError } = await window.kkuSupabase
       .from('notification_queue')

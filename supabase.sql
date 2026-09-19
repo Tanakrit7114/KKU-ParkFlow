@@ -13,8 +13,13 @@ alter table public.penalties add column if not exists rule_id uuid references pu
 create table if not exists public.appeals (id uuid primary key default gen_random_uuid(), report_id uuid not null references public.reports(id), appellant_id uuid not null references public.profiles(id), reason text not null, status text not null default 'PENDING' check (status in ('PENDING','UNDER_REVIEW','APPROVED','REJECTED')), decision_note text, decided_by uuid references public.profiles(id), decided_at timestamptz, created_at timestamptz default now());
 create table if not exists public.audit_logs (id bigserial primary key, actor_id uuid references public.profiles(id), action text not null, entity_type text not null, entity_id uuid, metadata jsonb default '{}'::jsonb, created_at timestamptz default now());
 create table if not exists public.notification_queue (id uuid primary key default gen_random_uuid(), report_id uuid not null references public.reports(id), recipient_email text, subject text not null, body text not null, status text not null default 'QUEUED' check (status in ('QUEUED','SENT','FAILED','NO_RECIPIENT')), created_at timestamptz default now(), sent_at timestamptz);
+create table if not exists public.mock_gmail_contacts (id uuid primary key default gen_random_uuid(), email text not null, display_name text not null, active boolean not null default true, created_by uuid references public.profiles(id), created_at timestamptz not null default now());
+create unique index if not exists mock_gmail_contacts_email_idx on public.mock_gmail_contacts (lower(email));
+create table if not exists public.mock_gmail_messages (id uuid primary key default gen_random_uuid(), report_id uuid references public.reports(id) on delete set null, recipient_email text not null, recipient_name text, subject text not null, body text not null, status text not null default 'SENT' check (status in ('DRAFT','SENT','FAILED')), sent_by uuid references public.profiles(id), sent_at timestamptz, created_at timestamptz not null default now());
+create index if not exists mock_gmail_messages_sent_at_idx on public.mock_gmail_messages (sent_at desc);
 create or replace function public.is_admin() returns boolean language sql security definer set search_path = public as $$ select exists (select 1 from public.profiles where id=auth.uid() and role in ('admin','super_admin')); $$;
 alter table public.vehicle_registry enable row level security; alter table public.penalty_rules enable row level security; alter table public.penalties enable row level security; alter table public.appeals enable row level security; alter table public.audit_logs enable row level security; alter table public.notification_queue enable row level security;
+alter table public.mock_gmail_contacts enable row level security; alter table public.mock_gmail_messages enable row level security;
 create policy "admins manage vehicle registry" on public.vehicle_registry for all using (public.is_admin()) with check (public.is_admin());
 create policy "admins manage penalty rules" on public.penalty_rules for all using (public.is_admin()) with check (public.is_admin());
 create policy "admins manage penalties" on public.penalties for all using (public.is_admin()) with check (public.is_admin());
@@ -25,6 +30,10 @@ create policy "admins manage appeals" on public.appeals for update using (public
 create policy "admins read audit logs" on public.audit_logs for select using (public.is_admin());
 create policy "admins create audit logs" on public.audit_logs for insert with check (public.is_admin());
 create policy "admins manage notification queue" on public.notification_queue for all using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "admins manage mock gmail contacts" on public.mock_gmail_contacts;
+create policy "admins manage mock gmail contacts" on public.mock_gmail_contacts for all using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "admins manage mock gmail messages" on public.mock_gmail_messages;
+create policy "admins manage mock gmail messages" on public.mock_gmail_messages for all using (public.is_admin()) with check (public.is_admin());
 insert into public.penalty_rules (violation_type,points,fine_amount,threshold_points) values ('จอดรถกีดขวาง / ผิดพื้นที่',5,0,10),('จอดขวางทางเข้าออก',5,0,10),('จอดบนทางเท้า',5,0,10),('จอดกีดขวางรถคันอื่น',5,0,10) on conflict (violation_type) do nothing;
 alter table public.profiles enable row level security; alter table public.reports enable row level security;
 create or replace function public.is_admin() returns boolean language sql security definer set search_path = public as $$ select exists (select 1 from public.profiles where id=auth.uid() and role in ('admin','super_admin')); $$;
