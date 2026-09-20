@@ -51,12 +51,18 @@ supabase functions deploy analyze-report
 
 ## เปิดใช้งานอีเมลจริงก่อน production
 
-การตัดสินใจของ Admin และการส่งอีเมลทำงานผ่าน Supabase Edge Function แล้ว โดยหน้าเว็บจะไม่เห็น API key ผู้ดูแลต้องตั้งค่า Secrets ใน Supabase → Edge Functions → Secrets:
+การตัดสินใจของ Admin จะบันทึกผ่าน Supabase ส่วนการส่งอีเมลจริงทำงานผ่าน Vercel Node API ด้วย Nodemailer และ Gmail SMTP เพื่อรองรับ App Password ของ Google โดยหน้าเว็บจะไม่เห็นรหัสผ่าน
 
-- `SMTP2GO_API_KEY` — API key จาก SMTP2GO สำหรับส่งอีเมลผ่าน API
-- `MAIL_FROM` — อีเมลผู้ส่งที่ยืนยันกับ SMTP2GO แล้ว เช่น `no-reply@example.ac.th`
+ตั้งค่า Environment Variables ใน Vercel:
 
-SMTP2GO มีแผนฟรี 1,000 ฉบับต่อเดือน (สูงสุด 200 ฉบับต่อวัน) และยังต้องยืนยันอีเมลผู้ส่งก่อนส่งจริง
+- `SMTP_HOST=smtp.gmail.com`
+- `SMTP_PORT=587`
+- `SMTP_USER` — บัญชี Google ที่สร้าง App Password
+- `SMTP_PASSWORD` — App Password 16 หลักจาก Google
+- `MAIL_FROM` — อีเมลผู้ส่งเดียวกับ `SMTP_USER`
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` — ค่าของโปรเจกต์ Supabase
+
+Google ระบุว่า App Password ต้องเปิด 2-Step Verification ก่อน และบัญชีองค์กรอาจถูกผู้ดูแลปิดความสามารถนี้
 
 จากนั้นเพิ่มทะเบียนรถและอีเมลเจ้าของรถในหน้า Admin review ระบบจะสร้างคิวและส่งอีเมลจริงไปยัง Gmail/อีเมลผู้รับเมื่อ Admin เลือก “ส่งอีเมลจริง” หาก provider ล้มเหลว ระบบจะเก็บสถานะ `FAILED` และให้ Admin กดส่งซ้ำได้
 
