@@ -22,6 +22,11 @@ function providerError(payload: unknown, status: number) {
   return `Resend API error (${status})`;
 }
 
+function parseSender(value: string) {
+  const match = value.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+  return match ? { name: match[1].trim(), email: match[2].trim() } : { email: value.trim() };
+}
+
 function htmlEscape(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",
@@ -48,12 +53,12 @@ Deno.serve(async (request) => {
     const url = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const resendKey = Deno.env.get("RESEND_API_KEY");
+    const brevoKey = Deno.env.get("BREVO_API_KEY");
     const from = Deno.env.get("MAIL_FROM");
     if (!url || !anonKey || !serviceRoleKey) return json({ error: "Supabase function is not configured" }, 500);
-    if (!resendKey || !from) {
+    if (!brevoKey || !from) {
       return json({
-        error: "ยังไม่ได้ตั้งค่า RESEND_API_KEY และ MAIL_FROM",
+        error: "ยังไม่ได้ตั้งค่า BREVO_API_KEY และ MAIL_FROM",
         code: "EMAIL_PROVIDER_NOT_CONFIGURED",
       }, 503);
     }
@@ -83,22 +88,29 @@ Deno.serve(async (request) => {
 
     const textBody = String(notification.body || "");
     const htmlBody = `<div style="font-family:Arial,sans-serif;line-height:1.7"><h2>${htmlEscape(String(notification.subject))}</h2><p>${htmlEscape(textBody).replace(/\n/g, "<br>")}</p><hr><small>ส่งจาก KKU ParkFlow</small></div>`;
-    const mailResponse = await fetch("https://api.resend.com/emails", {
+    const mailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
-      headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [notification.recipient_email], subject: notification.subject, text: textBody, html: htmlBody }),
+      headers: { "api-key": brevoKey, Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: parseSender(from),
+        to: [{ email: notification.recipient_email }],
+        subject: notification.subject,
+        textContent: textBody,
+        htmlContent: htmlBody,
+        tags: ["kku-parkflow", "report-notification"],
+      }),
     });
     const mailPayload = await mailResponse.json().catch(() => ({}));
     if (!mailResponse.ok) {
       await markStatus(adminClient, notification.id, "FAILED");
       return json({
-        error: `ส่งอีเมลไม่สำเร็จ: ${providerError(mailPayload, mailResponse.status)}`,
+        error: `ส่งอีเมลผ่าน Brevo ไม่สำเร็จ: ${providerError(mailPayload, mailResponse.status)}`,
         code: "EMAIL_PROVIDER_REJECTED",
         status: "FAILED",
       }, 502);
     }
     await markStatus(adminClient, notification.id, "SENT");
-    return json({ message: `ส่งอีเมลไปที่ ${notification.recipient_email} แล้ว`, status: "SENT", providerId: mailPayload?.id || null });
+    return json({ message: `ส่งอีเมลไปที่ ${notification.recipient_email} แล้ว`, status: "SENT", providerId: mailPayload?.messageId || null });
   } catch (error) {
     console.error(error);
     return json({ error: error instanceof Error ? error.message : "Notification sending failed" }, 500);
