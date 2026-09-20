@@ -48,3 +48,28 @@ const renderAdminWithAiFilter=renderAdmin;renderAdmin=()=>{renderAdminWithAiFilt
 window.addEventListener('cloud-reports-loaded',event=>{const raw=new Map((event.detail||[]).map(item=>[item.id,item]));reports.forEach(report=>{const source=raw.get(report.dbId);report.aiTriage=source?.ai_flags?.ai_triage||report.aiTriage||getAiTriage(report)});if(event.detail?.admin&&document.querySelector('#admin.active-view'))renderAdmin()});
 const clarifyDecisionActions=()=>document.querySelectorAll('.decision-action option[value="EMAIL"]').forEach(option=>{option.textContent='ส่งอีเมลจริง + หัก 5 คะแนน'});
 const renderAdminWithActionLabels=renderAdmin;renderAdmin=()=>{renderAdminWithActionLabels();clarifyDecisionActions();installReviewAiFilter()};
+
+// Evidence UX: support drag-and-drop, preview the selected image, and avoid
+// silently waiting for GPS when the reporter has not selected a location.
+const evidenceUpload=document.querySelector('#upload'),evidenceInput=evidenceUpload?.querySelector('input');
+let evidencePreviewUrl='';
+const clearEvidencePreview=()=>{if(evidencePreviewUrl)URL.revokeObjectURL(evidencePreviewUrl);evidencePreviewUrl='';evidenceUpload?.querySelector('.upload-preview')?.remove()};
+const syncEvidenceFile=fileItem=>{
+  if(!fileItem||!evidenceUpload||!evidenceInput)return;
+  if(!['image/jpeg','image/png'].includes(fileItem.type)||fileItem.size>10*1024*1024){toast('รองรับเฉพาะ JPG/PNG ขนาดไม่เกิน 10MB');evidenceInput.value='';return}
+  try{const dataTransfer=new DataTransfer();dataTransfer.items.add(fileItem);evidenceInput.files=dataTransfer.files}catch(_error){}
+  evidenceUpload.dataset.filename=fileItem.name;
+  const label=evidenceUpload.querySelector('b');if(label)label.textContent='✓ '+fileItem.name;
+  clearEvidencePreview();evidencePreviewUrl=URL.createObjectURL(fileItem);
+  const image=document.createElement('img');image.className='upload-preview';image.alt='ตัวอย่างหลักฐาน';image.src=evidencePreviewUrl;evidenceUpload.prepend(image)
+};
+if(evidenceInput)evidenceInput.onchange=()=>syncEvidenceFile(evidenceInput.files?.[0]);
+if(evidenceUpload){
+  evidenceUpload.addEventListener('dragover',event=>{event.preventDefault();evidenceUpload.classList.add('drag-active')});
+  evidenceUpload.addEventListener('dragleave',()=>evidenceUpload.classList.remove('drag-active'));
+  evidenceUpload.addEventListener('drop',event=>{event.preventDefault();evidenceUpload.classList.remove('drag-active');syncEvidenceFile(event.dataTransfer?.files?.[0])});
+  document.querySelector('#report-form')?.addEventListener('reset',()=>{clearEvidencePreview();delete evidenceUpload.dataset.filename;const label=evidenceUpload.querySelector('b');if(label)label.innerHTML='ลากไฟล์มาวางที่นี่ หรือ <u>เลือกไฟล์</u>'})
+}
+const locationPickerLabel=document.querySelector('.location-picker-head label');if(locationPickerLabel){locationPickerLabel.innerHTML='ตำแหน่งบนแผนที่ <span>*</span>';const hint=locationPickerLabel.parentElement?.querySelector('small');if(hint)hint.textContent='กดบนแผนที่ หรือลากหมุดไปยังจุดเกิดเหตุ'}
+const reportFormGuard=document.querySelector('#report-form');
+if(reportFormGuard)reportFormGuard.addEventListener('submit',event=>{if(!latitudeInput?.value||!longitudeInput?.value){event.preventDefault();event.stopImmediatePropagation();toast('กรุณาเลือกตำแหน่งบนแผนที่หรือกดใช้ตำแหน่งปัจจุบัน')}},{capture:true});

@@ -65,7 +65,7 @@ function parseEmailVehicleCsv(text) {
   if (Object.values(columns).some(index => index < 0)) throw new Error('หัวตารางไม่ครบ ต้องมี ทะเบียนรถ, ชื่อเจ้าของรถ และ อีเมลเจ้าของรถ');
   const errors = [], records = new Map();
   rows.forEach((values, rowIndex) => {
-    const plate = String(values[columns.plate_number] || '').trim();
+    const plate = String(values[columns.plate_number] || '').trim().replace(/\s+/g, ' ');
     const name = String(values[columns.owner_name] || '').trim();
     const email = String(values[columns.owner_email] || '').trim().toLowerCase();
     if (!plate && !name && !email) return;
@@ -153,7 +153,7 @@ async function loadEmailAdminPanel() {
 
 async function saveEmailVehicle(event) {
   event.preventDefault();
-  const plate = document.querySelector('#email-vehicle-plate')?.value.trim();
+  const plate = document.querySelector('#email-vehicle-plate')?.value.trim().replace(/\s+/g, ' ');
   const name = document.querySelector('#email-vehicle-name')?.value.trim();
   const email = document.querySelector('#email-vehicle-email')?.value.trim().toLowerCase();
   const status = document.querySelector('#email-admin-status');

@@ -116,6 +116,8 @@
   .mock-gmail-inputs button{width:100%}
   .toast{left:14px;right:14px;bottom:14px;text-align:center;padding:12px 14px;font-size:13px}
 }
+.upload.drag-active{border-color:var(--blue);background:#f1f5ff;box-shadow:0 0 0 3px #3766f61c}
+.upload-preview{display:block;width:min(100%,360px);height:150px;object-fit:cover;border-radius:9px;margin:0 auto 12px}
 
 /* Real email recipient editor: keep the four controls on one desktop row. */
 .mock-gmail-inputs{grid-template-columns:repeat(3,minmax(0,1fr)) auto}
