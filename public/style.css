@@ -120,6 +120,8 @@
 /* Real email recipient editor: keep the four controls on one desktop row. */
 .mock-gmail-inputs{grid-template-columns:repeat(3,minmax(0,1fr)) auto}
 .email-retry{margin-top:6px;border:0;background:#eef3ff;color:#2d5eea;border-radius:5px;padding:4px 8px;font-size:10px;cursor:pointer}
+.mock-gmail-import{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.mock-gmail-import .filter-btn{margin:0;padding:9px 12px;font-size:12px}.mock-gmail-import small{flex:1 1 100%;margin-top:0}
+@media (max-width:640px){.mock-gmail-import{display:grid;grid-template-columns:1fr 1fr}.mock-gmail-import .filter-btn{min-height:44px}.mock-gmail-import small{grid-column:1/-1}}
 @media (max-width:850px){.mock-gmail-inputs{grid-template-columns:1fr}}
 
 @media (max-width: 380px){
