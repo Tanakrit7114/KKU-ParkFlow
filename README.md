@@ -58,9 +58,9 @@ supabase functions deploy analyze-report
 - `SMTP_HOST=smtp.gmail.com`
 - `SMTP_PORT=587`
 - `SMTP_USER` — บัญชี Google ที่สร้าง App Password
-- `SMTP_PASSWORD` — App Password 16 หลักจาก Google
+- `SMTP_PASSWORD` หรือ `SMTP_PASS` — App Password 16 หลักจาก Google
 - `MAIL_FROM` — อีเมลผู้ส่งเดียวกับ `SMTP_USER`
-- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` — ค่าของโปรเจกต์ Supabase
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY` — ค่าของโปรเจกต์ Supabase (ไม่ต้องใส่ Service Role Key)
 
 Google ระบุว่า App Password ต้องเปิด 2-Step Verification ก่อน และบัญชีองค์กรอาจถูกผู้ดูแลปิดความสามารถนี้
 
