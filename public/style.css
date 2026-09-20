@@ -143,6 +143,10 @@
 .report-detail-ai b{display:block;color:var(--blue);font-size:19px}
 .report-detail-ai p{margin:0;font-weight:600;flex:1}
 .report-detail-ai span{font-size:11px;text-align:right}
+.report-detail-penalty{border:1px solid #f2dfb2;background:#fff9e9;border-radius:10px;padding:13px;margin-top:12px;color:#7b5b15}
+.report-detail-penalty small{display:block;color:#a17a22;font-size:11px;margin-bottom:4px}
+.report-detail-penalty b{display:block;font-size:14px}
+.report-detail-penalty p{margin:5px 0 0;font-size:12px;line-height:1.5}
 .report-detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .detail-link{display:block;color:var(--blue);font-size:11px;font-weight:600;margin-top:9px;cursor:pointer}
 .report-row,.history-card,.queue{cursor:pointer}
