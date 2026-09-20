@@ -132,3 +132,34 @@
   .admin-stats>div{padding:11px 8px}
   .admin-stats b{font-size:21px}
 }
+
+/* Final UI polish: predictable focus states, compact layouts and better overflow handling. */
+html{min-height:100%;scroll-behavior:smooth}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;min-width:320px;overflow-x:hidden}
+button,input,select,textarea{transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease,transform .18s ease}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #3766f655;outline-offset:2px}
+.main{min-width:0}
+.topbar>div:first-child,.topbar h1,.hero>div:first-child,.queue-body{min-width:0}
+.topbar h1{overflow-wrap:anywhere}
+.hero>div:first-child{position:relative;z-index:1;max-width:620px}
+.hero .primary:hover,.primary:hover{transform:translateY(-1px);box-shadow:0 8px 18px #2aa9982b}
+.filter-btn:hover,.icon-btn:hover{border-color:#b9c8ed;background:#f8faff}
+.queue{min-width:0}
+.queue-image{flex:0 0 auto}
+.report-info{min-width:0}
+.report-info b,.queue-body h3{overflow-wrap:anywhere}
+.upload:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px #3766f61c}
+.location-picker #location-map{isolation:isolate}
+.toast{z-index:50}
+@media (min-width:1400px){.main{padding-left:64px;padding-right:64px}}
+@media (max-width:640px){
+  .topbar{flex-wrap:wrap}
+  .topbar>div:first-child{flex:1 1 210px}
+  .top-actions{margin-left:auto}
+  .hero .primary{width:100%;justify-content:space-between}
+  .report-row{min-width:0}
+  .report-info small{max-width:100%}
+  .queue-body{overflow-wrap:anywhere}
+  .panel-head b{font-size:14px}
+  .status{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+}

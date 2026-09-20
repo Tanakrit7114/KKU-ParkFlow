@@ -15,6 +15,26 @@
 
 ใช้ `supabase.sql` เป็น schema หลักสำหรับระบบที่ deploy อยู่บน Vercel + Supabase ดูความสัมพันธ์ของตารางได้ที่ [`docs/ER-DIAGRAM.md`](docs/ER-DIAGRAM.md) ส่วน `db/schema.sql` เป็น schema เก่าของ Express/PostgreSQL demo และไม่ควรนำไปรันปนกับ Supabase schema
 
+## โครงสร้างโครงการ
+
+```text
+public/                 หน้าเว็บและไฟล์ frontend
+server/                 Express API และการส่งอีเมลจริง
+api/                    entrypoint สำหรับ Vercel
+supabase/               migrations และ Edge Functions
+db/                     schema สำหรับโหมด Express/PostgreSQL เก่า
+docs/                   เอกสารและ ER diagram
+```
+
+ไฟล์หน้าเว็บถูกแยกไว้ใน `public/` เพื่อไม่ปะปนกับ backend และ Supabase โดย Express/Vercel จะเสิร์ฟโฟลเดอร์นี้ให้อัตโนมัติ
+
+## รันและตรวจโค้ดในเครื่อง
+
+```bash
+npm run dev
+npm run check
+```
+
 ## Push GitHub
 
 ```bash
