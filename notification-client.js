@@ -17,6 +17,18 @@ const installNotificationSender = () => {
     return data;
   };
 
+  const notificationErrorText = async result => {
+    if (result?.data?.error) return String(result.data.error);
+    const response = result?.error?.context;
+    if (response?.clone) {
+      try {
+        const payload = await response.clone().json();
+        if (payload?.error) return String(payload.error);
+      } catch (_error) {}
+    }
+    return result?.error?.message || 'ส่งอีเมลไม่สำเร็จ';
+  };
+
   const invokeNotification = async notification => {
     if (!notification?.recipient_email) return { status: 'NO_RECIPIENT', message: 'ยังไม่พบอีเมลผู้รับ' };
     if (notification.status === 'SENT') return { status: 'SENT', message: 'ส่งอีเมลไปแล้ว' };
@@ -24,8 +36,7 @@ const installNotificationSender = () => {
       body: { notificationId: notification.id },
     });
     if (sendError || sent?.error) {
-      const detail = sent?.error || sendError?.context?.error || sendError?.message || 'ส่งอีเมลไม่สำเร็จ';
-      throw Error(detail);
+      throw Error(await notificationErrorText({ data: sent, error: sendError }));
     }
     return sent || { status: 'SENT', message: 'ส่งอีเมลแล้ว' };
   };
