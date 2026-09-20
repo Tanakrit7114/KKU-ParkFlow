@@ -1,33 +1,54 @@
-// Turns the admin notification queue action into a real email send.
-// The provider secret stays inside the Supabase Edge Function.
+// Sends the admin notification queue through the deployed Supabase Edge Function.
+// Provider credentials stay inside the Edge Function; they must never reach the browser.
 const installNotificationSender = () => {
   const queuedDecideCloudReport = window.decideCloudReport;
   if (!queuedDecideCloudReport || window.kkuNotificationSenderInstalled) return Boolean(queuedDecideCloudReport);
   window.kkuNotificationSenderInstalled = true;
-  window.decideCloudReport = async (id, status, action, note = '') => {
-    const result = await queuedDecideCloudReport(id, status, action, note);
-    if (status !== 'APPROVED' || action !== 'EMAIL' || !window.kkuSupabase) return result;
-    if (window.mockGmailSend) return window.mockGmailSend(id, note, result);
 
-    const { data: notification, error: notificationError } = await window.kkuSupabase
+  const findNotification = async reportId => {
+    const { data, error } = await window.kkuSupabase
       .from('notification_queue')
       .select('id,status,recipient_email')
-      .eq('report_id', id)
+      .eq('report_id', reportId)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (notificationError) {
-      return { ...result, result: `${result.result} แต่ตรวจสอบสถานะอีเมลไม่ได้: ${notificationError.message}` };
-    }
-    if (!notification?.recipient_email || notification.status !== 'QUEUED') return result;
+    if (error) throw error;
+    return data;
+  };
 
+  const invokeNotification = async notification => {
+    if (!notification?.recipient_email) return { status: 'NO_RECIPIENT', message: 'ยังไม่พบอีเมลผู้รับ' };
+    if (notification.status === 'SENT') return { status: 'SENT', message: 'ส่งอีเมลไปแล้ว' };
     const { data: sent, error: sendError } = await window.kkuSupabase.functions.invoke('send-notification', {
       body: { notificationId: notification.id },
     });
-    if (sendError || sent?.error) {
-      return { ...result, result: `${result.result} แต่ส่งอีเมลไม่สำเร็จ: ${sendError?.message || sent?.error || 'กรุณาตั้งค่าผู้ให้บริการอีเมล'}` };
+    if (sendError || sent?.error) throw Error(sendError?.message || sent?.error || 'ส่งอีเมลไม่สำเร็จ');
+    return sent || { status: 'SENT', message: 'ส่งอีเมลแล้ว' };
+  };
+
+  window.retryCloudNotification = async notificationId => {
+    if (!window.kkuSupabase || !notificationId) throw Error('ไม่พบรายการอีเมล');
+    const { data: notification, error } = await window.kkuSupabase
+      .from('notification_queue')
+      .select('id,status,recipient_email')
+      .eq('id', notificationId)
+      .single();
+    if (error) throw error;
+    return invokeNotification(notification);
+  };
+
+  window.decideCloudReport = async (id, status, action, note = '') => {
+    const result = await queuedDecideCloudReport(id, status, action, note);
+    if (status !== 'APPROVED' || action !== 'EMAIL' || !window.kkuSupabase) return result;
+    try {
+      const notification = await findNotification(id);
+      if (!notification?.recipient_email || notification?.status === 'NO_RECIPIENT') return result;
+      const sent = await invokeNotification(notification);
+      return { ...result, result: sent.message || `ส่งอีเมลไปที่ ${notification.recipient_email} แล้ว` };
+    } catch (error) {
+      return { ...result, result: `${result.result} แต่ส่งอีเมลจริงไม่สำเร็จ: ${error.message || 'กรุณาตรวจสอบการตั้งค่าอีเมล'}` };
     }
-    return { ...result, result: sent?.message || 'ยืนยันและส่งอีเมลแล้ว' };
   };
   return true;
 };
