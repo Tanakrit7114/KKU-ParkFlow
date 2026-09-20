@@ -8,6 +8,7 @@ const corsHeaders = {
 
 type AnalysisResult = {
   is_motorcycle: boolean;
+  ai_triage: "MATCH" | "NO_MATCH" | "MANUAL_REVIEW";
   violation_type: string;
   confidence: number;
   evidence_notes: string;
@@ -91,6 +92,7 @@ async function callHuggingFace(bytes: Uint8Array, reportDescription: string, mim
 
   const result: AnalysisResult = {
     is_motorcycle: isMotorcycle,
+    ai_triage: isMotorcycle && confidence >= 60 ? "MATCH" : isMotorcycle ? "MANUAL_REVIEW" : "NO_MATCH",
     violation_type: isMotorcycle ? "ตรวจพบรถจักรยานยนต์ — รอ Admin ตรวจสอบการจอด" : "ไม่พบรถจักรยานยนต์ชัดเจน",
     confidence: Math.max(0, Math.min(100, confidence)),
     evidence_notes: "",
@@ -171,6 +173,7 @@ Deno.serve(async (request) => {
       const message = error instanceof Error ? error.message : "Hugging Face analysis failed";
       result = {
         is_motorcycle: false,
+        ai_triage: "MANUAL_REVIEW",
         violation_type: "ยังยืนยันไม่ได้ — Admin ต้องตรวจเอง",
         confidence: 0,
         evidence_notes: `Hugging Face วิเคราะห์ไม่ได้: ${message}`.slice(0, 500),

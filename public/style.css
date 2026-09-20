@@ -133,6 +133,11 @@
   .admin-stats b{font-size:21px}
 }
 
+.review-ai-filter{margin-left:auto;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);padding:8px 10px;font:12px inherit;max-width:220px}
+.ai-triage{display:inline-flex;align-items:center;margin-top:8px;padding:5px 8px;border-radius:6px;background:#eef3ff;color:#375ba8;font-size:11px;font-weight:600}
+.queue[hidden]{display:none}
+@media (max-width:640px){.review-ai-filter{width:100%;max-width:none;margin:8px 0 0}.panel-head{flex-wrap:wrap}.ai-triage{font-size:10px}}
+
 /* Final UI polish: predictable focus states, compact layouts and better overflow handling. */
 html{min-height:100%;scroll-behavior:smooth}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;min-width:320px;overflow-x:hidden}
