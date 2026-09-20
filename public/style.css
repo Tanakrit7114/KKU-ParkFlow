@@ -159,7 +159,6 @@
   .report-detail-ai p{grid-column:1/-1;grid-row:2}
   .report-detail-ai span{grid-column:1/-1;text-align:left}
 }
-
 /* Real email recipient editor: keep the four controls on one desktop row. */
 .mock-gmail-inputs{grid-template-columns:repeat(3,minmax(0,1fr)) auto}
 .email-retry{margin-top:6px;border:0;background:#eef3ff;color:#2d5eea;border-radius:5px;padding:4px 8px;font-size:10px;cursor:pointer}
@@ -228,4 +227,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .queue-body{overflow-wrap:anywhere}
   .panel-head b{font-size:14px}
   .status{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+}
+
+/* Keep one account surface: the top account pill is the only identity area. */
+.sidebar .profile{display:none!important}
+.top-actions{display:flex!important}
+@media(max-width:640px){
+  .top-actions{display:flex!important;align-items:center;gap:6px;margin-left:auto}
+  .user-pill{max-width:230px;min-width:0;padding:7px 8px;font-size:12px;gap:6px}
+  .user-pill .account-label{display:inline;white-space:nowrap}
+  .user-pill .email-label{display:inline;max-width:110px}
+  .user-pill .logout-label{font-size:9px}
 }
