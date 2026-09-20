@@ -239,3 +239,25 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .user-pill .email-label{display:inline;max-width:110px}
   .user-pill .logout-label{font-size:9px}
 }
+
+/* Mobile report form: keep the instructions useful without pushing the form below the fold. */
+@media(max-width:640px){
+  .sidebar{padding-top:9px;padding-bottom:5px}
+  .brand{margin-bottom:6px}
+  nav{padding-top:4px;padding-bottom:1px}
+  .nav-item{padding:9px 11px;font-size:12px}
+  .form-wrap{box-shadow:0 8px 24px #1a2c5b0d}
+  .form-intro{padding:18px 16px}
+  .form-intro h2{font-size:27px;line-height:1.15;margin:7px 0 9px}
+  .form-intro p{font-size:12px;line-height:1.55;margin:0}
+  .privacy{display:flex;align-items:center;gap:8px;margin-top:14px;padding:10px}
+  .privacy span{font-size:18px;line-height:1}
+  .privacy b{font-size:11px}
+  .privacy small{font-size:9px}
+  .form-wrap form{padding:18px 14px 22px}
+  .form-wrap form>label{font-size:14px}
+  .upload{min-height:142px;display:flex;flex-direction:column;justify-content:center}
+  .upload-icon{font-size:23px}
+  .upload b{font-size:12px}
+  .upload small{font-size:10px}
+}
