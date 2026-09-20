@@ -160,6 +160,22 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .toast{z-index:50}
 @media (min-width:1400px){.main{padding-left:64px;padding-right:64px}}
 @media (max-width:640px){
+  /* Compact mobile header: keep identity visible and avoid a tall empty sidebar. */
+  .sidebar{padding:10px 12px 6px}
+  .brand{margin:0 3px 8px;align-items:center}
+  .brand div{display:block}
+  .brand b{font-size:18px}
+  .brand small{font-size:8px}
+  .profile{padding:8px 4px;gap:8px}
+  .profile .profile-copy{display:block;flex:1;min-width:0}
+  .profile-copy b,.profile-copy small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .profile-copy b{font-size:13px}
+  .profile-copy small{font-size:10px}
+  .profile .logout-btn{flex:0 0 34px}
+  .profile .online{right:45px;top:12px}
+  nav{padding-top:6px}
+  .topbar{margin-top:4px}
+  .top-actions{display:none}
   .topbar{flex-wrap:wrap}
   .topbar>div:first-child{flex:1 1 210px}
   .top-actions{margin-left:auto}
