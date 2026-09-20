@@ -118,6 +118,47 @@
 }
 .upload.drag-active{border-color:var(--blue);background:#f1f5ff;box-shadow:0 0 0 3px #3766f61c}
 .upload-preview{display:block;width:min(100%,360px);height:150px;object-fit:cover;border-radius:9px;margin:0 auto 12px}
+.report-detail-open{overflow:hidden}
+.report-detail-modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:20px}
+.report-detail-modal[hidden]{display:none}
+.report-detail-backdrop{position:absolute;inset:0;background:#101a37b8;backdrop-filter:blur(3px)}
+.report-detail-dialog{position:relative;width:min(760px,100%);max-height:min(92vh,820px);overflow:auto;background:var(--white);border-radius:18px;box-shadow:0 24px 80px #101a3766}
+.report-detail-header{display:flex;align-items:flex-start;justify-content:space-between;padding:24px 26px 16px;border-bottom:1px solid var(--line)}
+.report-detail-header h2{margin:5px 0 0;font-size:22px}
+.report-detail-close{border:0;background:#eef2fa;color:var(--ink);width:36px;height:36px;border-radius:50%;font-size:25px;line-height:1;cursor:pointer}
+.report-detail-body{padding:22px 26px 28px}
+.report-detail-summary{display:grid;grid-template-columns:190px 1fr;gap:18px;align-items:start}
+.report-detail-evidence{height:140px;border-radius:12px;overflow:hidden;background:#e9edf5;display:grid;place-items:center;color:#65718b;font-size:12px;text-align:center}
+.report-detail-evidence img{width:100%;height:100%;object-fit:cover;display:block}
+.report-detail-summary h3{font-size:19px;line-height:1.45;margin:11px 0 5px}
+.report-detail-summary p{color:var(--muted);font-size:13px;margin:4px 0}
+.report-detail-id{font-size:11px!important}
+.report-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:22px}
+.report-detail-field{border:1px solid var(--line);border-radius:10px;padding:11px 13px;min-width:0}
+.report-detail-field small,.report-detail-description small,.report-detail-ai small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}
+.report-detail-field b{display:block;font-size:13px;overflow-wrap:anywhere}
+.report-detail-description{border:1px solid var(--line);border-radius:10px;padding:13px;margin-top:12px}
+.report-detail-description p{margin:0;font-size:13px;line-height:1.65;white-space:pre-wrap}
+.report-detail-ai{display:flex;align-items:center;gap:16px;background:#f2f7ff;border-radius:10px;padding:13px;margin-top:12px;color:#4a628c}
+.report-detail-ai b{display:block;color:var(--blue);font-size:19px}
+.report-detail-ai p{margin:0;font-weight:600;flex:1}
+.report-detail-ai span{font-size:11px;text-align:right}
+.report-detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.detail-link{display:block;color:var(--blue);font-size:11px;font-weight:600;margin-top:9px;cursor:pointer}
+.report-row,.history-card,.queue{cursor:pointer}
+.queue-actions,.queue-actions *{cursor:default}
+@media(max-width:640px){
+  .report-detail-modal{padding:10px}
+  .report-detail-header{padding:18px 18px 13px}
+  .report-detail-header h2{font-size:18px}
+  .report-detail-body{padding:16px 18px 22px}
+  .report-detail-summary{grid-template-columns:1fr}
+  .report-detail-evidence{height:180px}
+  .report-detail-grid{grid-template-columns:1fr}
+  .report-detail-ai{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .report-detail-ai p{grid-column:1/-1;grid-row:2}
+  .report-detail-ai span{grid-column:1/-1;text-align:left}
+}
 
 /* Real email recipient editor: keep the four controls on one desktop row. */
 .mock-gmail-inputs{grid-template-columns:repeat(3,minmax(0,1fr)) auto}
