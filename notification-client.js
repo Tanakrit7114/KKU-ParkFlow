@@ -23,7 +23,10 @@ const installNotificationSender = () => {
     const { data: sent, error: sendError } = await window.kkuSupabase.functions.invoke('send-notification', {
       body: { notificationId: notification.id },
     });
-    if (sendError || sent?.error) throw Error(sendError?.message || sent?.error || 'ส่งอีเมลไม่สำเร็จ');
+    if (sendError || sent?.error) {
+      const detail = sent?.error || sendError?.context?.error || sendError?.message || 'ส่งอีเมลไม่สำเร็จ';
+      throw Error(detail);
+    }
     return sent || { status: 'SENT', message: 'ส่งอีเมลแล้ว' };
   };
 

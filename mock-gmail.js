@@ -5,17 +5,6 @@ const emailAdminIsAdmin = () => ['admin', 'super_admin'].includes(window.current
 let emailAdminVehicles = [];
 let emailAdminNotifications = [];
 
-window.retryCloudNotification = async notificationId => {
-  if (!window.kkuSupabase || !notificationId) throw Error('ไม่พบรายการอีเมล');
-  const { data: notification, error } = await window.kkuSupabase.from('notification_queue').select('id,status,recipient_email').eq('id', notificationId).single();
-  if (error) throw error;
-  if (!notification.recipient_email) return { status: 'NO_RECIPIENT', message: 'ยังไม่พบอีเมลผู้รับ' };
-  if (notification.status === 'SENT') return { status: 'SENT', message: 'ส่งอีเมลไปแล้ว' };
-  const { data, error: sendError } = await window.kkuSupabase.functions.invoke('send-notification', { body: { notificationId: notification.id } });
-  if (sendError || data?.error) throw Error(sendError?.message || data?.error || 'ส่งอีเมลไม่สำเร็จ');
-  return data || { status: 'SENT', message: 'ส่งอีเมลแล้ว' };
-};
-
 function ensureEmailAdminPanel() {
   const admin = document.querySelector('#admin');
   if (!admin || document.querySelector('#email-admin-panel') || !emailAdminIsAdmin()) return;

@@ -13,6 +13,15 @@ function json(body: unknown, status = 200) {
   });
 }
 
+function providerError(payload: unknown, status: number) {
+  if (payload && typeof payload === "object") {
+    const value = payload as Record<string, unknown>;
+    const message = value.message || value.error || value.name;
+    if (message) return `${message} (Resend ${status})`;
+  }
+  return `Resend API error (${status})`;
+}
+
 function htmlEscape(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",
@@ -42,7 +51,12 @@ Deno.serve(async (request) => {
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const from = Deno.env.get("MAIL_FROM");
     if (!url || !anonKey || !serviceRoleKey) return json({ error: "Supabase function is not configured" }, 500);
-    if (!resendKey || !from) return json({ error: "ยังไม่ได้ตั้งค่า RESEND_API_KEY และ MAIL_FROM" }, 503);
+    if (!resendKey || !from) {
+      return json({
+        error: "ยังไม่ได้ตั้งค่า RESEND_API_KEY และ MAIL_FROM",
+        code: "EMAIL_PROVIDER_NOT_CONFIGURED",
+      }, 503);
+    }
 
     const authorization = request.headers.get("Authorization");
     if (!authorization?.startsWith("Bearer ")) return json({ error: "Authentication required" }, 401);
@@ -77,7 +91,11 @@ Deno.serve(async (request) => {
     const mailPayload = await mailResponse.json().catch(() => ({}));
     if (!mailResponse.ok) {
       await markStatus(adminClient, notification.id, "FAILED");
-      return json({ error: `ส่งอีเมลไม่สำเร็จ: ${mailPayload?.message || "Resend API error"}`, status: "FAILED" }, 502);
+      return json({
+        error: `ส่งอีเมลไม่สำเร็จ: ${providerError(mailPayload, mailResponse.status)}`,
+        code: "EMAIL_PROVIDER_REJECTED",
+        status: "FAILED",
+      }, 502);
     }
     await markStatus(adminClient, notification.id, "SENT");
     return json({ message: `ส่งอีเมลไปที่ ${notification.recipient_email} แล้ว`, status: "SENT", providerId: mailPayload?.id || null });
