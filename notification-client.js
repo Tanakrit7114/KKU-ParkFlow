@@ -2,7 +2,7 @@
 // Provider credentials stay inside the Edge Function; they must never reach the browser.
 const installNotificationSender = () => {
   const queuedDecideCloudReport = window.decideCloudReport;
-  if (!queuedDecideCloudReport || window.kkuNotificationSenderInstalled) return Boolean(queuedDecideCloudReport);
+  if (!queuedDecideCloudReport || window.kkuNotificationSenderInstalled || window.kkuDirectEmailDecision) return Boolean(queuedDecideCloudReport);
   window.kkuNotificationSenderInstalled = true;
 
   const findNotification = async reportId => {
