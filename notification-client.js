@@ -1,8 +1,7 @@
-// Sends the admin notification queue through the deployed Supabase Edge Function.
-// Provider credentials stay inside the Edge Function; they must never reach the browser.
+// Sends the admin notification queue through the deployed Vercel API.
+// Provider credentials stay on the server; they must never reach the browser.
 const installNotificationSender = () => {
-  const queuedDecideCloudReport = window.decideCloudReport;
-  if (!queuedDecideCloudReport || window.kkuNotificationSenderInstalled || window.kkuDirectEmailDecision) return Boolean(queuedDecideCloudReport);
+  if (!window.kkuSupabase || window.kkuNotificationSenderInstalled) return Boolean(window.kkuSupabase);
   window.kkuNotificationSenderInstalled = true;
 
   const findNotification = async reportId => {
@@ -32,12 +31,15 @@ const installNotificationSender = () => {
   const invokeNotification = async notification => {
     if (!notification?.recipient_email) return { status: 'NO_RECIPIENT', message: 'ยังไม่พบอีเมลผู้รับ' };
     if (notification.status === 'SENT') return { status: 'SENT', message: 'ส่งอีเมลไปแล้ว' };
-    const { data: sent, error: sendError } = await window.kkuSupabase.functions.invoke('send-notification', {
-      body: { notificationId: notification.id },
+    const session = (await window.kkuSupabase.auth.getSession()).data.session;
+    if (!session?.access_token) throw Error('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
+    const response = await fetch('/api/send-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ notificationId: notification.id }),
     });
-    if (sendError || sent?.error) {
-      throw Error(await notificationErrorText({ data: sent, error: sendError }));
-    }
+    const sent = await response.json().catch(() => ({}));
+    if (!response.ok || sent?.error) throw Error(sent?.error || 'ส่งอีเมลไม่สำเร็จ');
     return sent || { status: 'SENT', message: 'ส่งอีเมลแล้ว' };
   };
 
@@ -52,18 +54,23 @@ const installNotificationSender = () => {
     return invokeNotification(notification);
   };
 
-  window.decideCloudReport = async (id, status, action, note = '') => {
-    const result = await queuedDecideCloudReport(id, status, action, note);
-    if (status !== 'APPROVED' || action !== 'EMAIL' || !window.kkuSupabase) return result;
-    try {
-      const notification = await findNotification(id);
-      if (!notification?.recipient_email || notification?.status === 'NO_RECIPIENT') return result;
-      const sent = await invokeNotification(notification);
-      return { ...result, result: sent.message || `ส่งอีเมลไปที่ ${notification.recipient_email} แล้ว` };
-    } catch (error) {
-      return { ...result, result: `${result.result} แต่ส่งอีเมลจริงไม่สำเร็จ: ${error.message || 'กรุณาตรวจสอบการตั้งค่าอีเมล'}` };
-    }
-  };
+  // supabase-config.js owns the decision flow when direct email delivery is enabled.
+  // Keep this wrapper only for older deployments that still use the old flow.
+  const queuedDecideCloudReport = window.decideCloudReport;
+  if (queuedDecideCloudReport && !window.kkuDirectEmailDecision) {
+    window.decideCloudReport = async (id, status, action, note = '') => {
+      const result = await queuedDecideCloudReport(id, status, action, note);
+      if (status !== 'APPROVED' || action !== 'EMAIL') return result;
+      try {
+        const notification = await findNotification(id);
+        if (!notification?.recipient_email || notification?.status === 'NO_RECIPIENT') return result;
+        const sent = await invokeNotification(notification);
+        return { ...result, result: sent.message || `ส่งอีเมลไปที่ ${notification.recipient_email} แล้ว` };
+      } catch (error) {
+        return { ...result, result: `${result.result} แต่ส่งอีเมลจริงไม่สำเร็จ: ${error.message || 'กรุณาตรวจสอบการตั้งค่าอีเมล'}` };
+      }
+    };
+  }
   return true;
 };
 
