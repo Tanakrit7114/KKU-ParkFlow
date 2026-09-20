@@ -49,6 +49,13 @@ supabase functions deploy analyze-report
 
 ถ้ายังไม่ใส่ `HF_TOKEN` รายงานยังถูกบันทึกตามปกติ แต่หน้า Admin จะแสดงว่า AI ใช้งานไม่ได้พร้อมเหตุผล และเปิดให้ Admin ตรวจหลักฐานเอง
 
-## ข้อจำกัด
+## เปิดใช้งานอีเมลจริงก่อน production
 
-AI, email notification และ Admin actions ที่ใช้ secret ควรย้ายไป Supabase Edge Functions ก่อน production เพื่อไม่เปิด secret ให้ Browser และควรตรวจ PDPA ก่อนใช้ข้อมูลจริง
+การตัดสินใจของ Admin และการส่งอีเมลทำงานผ่าน Supabase Edge Function แล้ว โดยหน้าเว็บจะไม่เห็น API key ผู้ดูแลต้องตั้งค่า Secrets ใน Supabase → Edge Functions → Secrets:
+
+- `RESEND_API_KEY` — API key จาก Resend ที่อนุญาตส่งอีเมล
+- `MAIL_FROM` — ผู้ส่งที่ยืนยันโดเมนกับ Resend แล้ว เช่น `KKU ParkFlow <no-reply@example.ac.th>`
+
+จากนั้นเพิ่มทะเบียนรถและอีเมลเจ้าของรถในหน้า Admin review ระบบจะสร้างคิวและส่งอีเมลจริงไปยัง Gmail/อีเมลผู้รับเมื่อ Admin เลือก “ส่งอีเมลจริง” หาก provider ล้มเหลว ระบบจะเก็บสถานะ `FAILED` และให้ Admin กดส่งซ้ำได้
+
+AI เป็นเพียงตัวช่วยคัดกรองภาพ ไม่ใช่คำตัดสินลงโทษอัตโนมัติ และควรตรวจ PDPA/สิทธิ์การเข้าถึงข้อมูลจริงก่อนใช้งานเต็มรูปแบบ
