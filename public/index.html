@@ -51,6 +51,9 @@
     locationCompat.hidden = true;
     locationCompat.innerHTML = '<button id="gps-button" type="button"></button><button id="map-reset" type="button"></button>';
     document.querySelector('#location-map')?.parentNode.appendChild(locationCompat);
+    const reportImageInput = document.querySelector('#upload input[type="file"]');
+    reportImageInput?.setAttribute('capture', 'environment');
+    document.querySelector('#upload b')?.replaceWith(Object.assign(document.createElement('b'), { innerHTML: 'ถ่ายภาพจากกล้อง หรือ <u>เลือกไฟล์</u>' }));
   </script>
   <script src="app.js"></script>
   <script src="notification-client.js"></script>
