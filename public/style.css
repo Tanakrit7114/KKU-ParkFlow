@@ -266,3 +266,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .upload small{font-size:10px}
 }
 .month-bar span{transform:none!important;font-size:10px!important;letter-spacing:.2px}
+.month-bars{padding-bottom:28px!important}
+.month-bar{position:relative}
+.month-bar span{position:absolute;bottom:-22px}
