@@ -265,3 +265,4 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .upload b{font-size:12px}
   .upload small{font-size:10px}
 }
+.month-bar span{transform:none!important;font-size:10px!important;letter-spacing:.2px}
